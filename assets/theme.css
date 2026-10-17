@@ -1,0 +1,8 @@
+/* The theme switch (theme.js), shared by every page. */
+.theme { display: inline-flex; border: 1px solid var(--border); border-radius: 999px; padding: 2px; background: var(--bg); }
+.theme button {
+  border: 0; background: transparent; color: var(--text-3); cursor: pointer;
+  width: 30px; height: 26px; border-radius: 999px; display: grid; place-items: center;
+}
+.theme button svg { width: 15px; height: 15px; }
+.theme button[aria-pressed="true"] { background: var(--surface); color: var(--text); box-shadow: 0 0 0 1px var(--border); }

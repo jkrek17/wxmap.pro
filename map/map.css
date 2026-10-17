@@ -1,0 +1,134 @@
+/* wxmap.pro map: the house style on top of the globe kit and the marine wind
+   page's own CSS (both loaded first, unchanged), and the cyclone phase space
+   panel section and card. tokens.css already gives --bg, --text, --accent and the
+   rest; here the glass surfaces get their light and dark values, and the few
+   globe-kit colours written for a dark page only are re-pointed at tokens. The
+   forecast colours on the map itself are the same in both themes. */
+
+:root {
+  --surface: rgba(255, 255, 255, 0.9);
+  --surface-solid: #ffffff;
+  --surface-raised: rgba(14, 34, 54, 0.04);
+  --surface-hover: rgba(14, 34, 54, 0.08);
+  --shadow: 0 8px 24px rgba(14, 34, 54, 0.16);
+  --sky: radial-gradient(ellipse at 50% 45%, #f4f6f8 0%, #dfe6ed 55%, #c9d3dd 90%);
+  --scrim: rgba(14, 34, 54, 0.35);
+  --line-swatch: #43566b;
+  --ok: #17885c;
+  --warn: #a87a00;
+  --err: #c0362c;
+  --font: var(--sans);
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --surface: rgba(10, 20, 32, 0.86);
+    --surface-solid: #0e1b29;
+    --surface-raised: rgba(255, 255, 255, 0.045);
+    --surface-hover: rgba(255, 255, 255, 0.08);
+    --shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+    --sky: radial-gradient(ellipse at 50% 45%, #14284a 0%, #0a1528 45%, #050a14 80%);
+    --scrim: rgba(3, 7, 15, 0.6);
+    --line-swatch: #e4ecf3;
+    --ok: #34d399;
+    --warn: #fbbf24;
+    --err: #f87171;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --surface: rgba(10, 20, 32, 0.86);
+  --surface-solid: #0e1b29;
+  --surface-raised: rgba(255, 255, 255, 0.045);
+  --surface-hover: rgba(255, 255, 255, 0.08);
+  --shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+  --sky: radial-gradient(ellipse at 50% 45%, #14284a 0%, #0a1528 45%, #050a14 80%);
+  --scrim: rgba(3, 7, 15, 0.6);
+  --line-swatch: #e4ecf3;
+  --ok: #34d399;
+  --warn: #fbbf24;
+  --err: #f87171;
+  color-scheme: dark;
+}
+
+/* ---------- globe kit colours re-pointed at tokens ---------- */
+body { font-family: var(--sans); }
+#map { background: var(--sky); }
+.boot { position: fixed; inset: 0; display: grid; place-items: center; margin: 0; color: var(--text-2); font: 500 14px var(--sans); }
+.icon-btn-primary, .icon-btn-primary:hover { color: var(--on-accent); }
+.btn[aria-expanded="true"], .product[aria-checked="true"] { border-color: var(--accent); }
+.chip[data-state="error"] { color: var(--err); border-color: var(--err); }
+.chip[data-state="warn"] { color: var(--warn); }
+.switch { background: var(--border-strong); }
+input[type="range"]::-webkit-slider-runnable-track { background: var(--border-strong); }
+input[type="range"]::-moz-range-track { background: var(--border-strong); }
+.readout .note-line { color: var(--text); }
+.scrim, .sheet, .dialog::backdrop { background: var(--scrim); }
+.maplibregl-ctrl-scale, .maplibregl-ctrl-attrib.maplibregl-compact { background: var(--surface); }
+.swatch-isobars { background: var(--line-swatch); }
+.swatch-edges { border-top-color: var(--line-swatch); box-shadow: 0 4px 0 -1px var(--line-swatch); }
+.swatch-track { border-top-color: var(--line-swatch); }
+
+/* ---------- this site's name in the top bar ---------- */
+a.brand { color: var(--text); text-decoration: none; }
+.brand h1 { font: 600 17px/1.1 var(--display); letter-spacing: 0.01em; }
+.brand .tld { color: var(--text-3); font-weight: 500; }
+.topbar-actions .theme { flex: none; }
+/* phones follow the system theme; the top bar has no room for the switch */
+@media (max-width: 760px) { .topbar-actions .theme { display: none; } }
+
+/* ---------- cyclone phase space: panel section ---------- */
+.swatch-cps {
+  background: transparent; border-radius: 50%; width: 12px; height: 12px;
+  border: 3px solid; border-color: #d92626 #fad91a #2680e6 #33ad40;
+}
+.cps-list { list-style: none; margin: 6px 0 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+.cps-list button {
+  width: 100%; display: grid; grid-template-columns: 12px minmax(0, 1fr) auto auto; gap: 8px; align-items: center;
+  padding: 5px 6px; border: 1px solid transparent; border-radius: var(--radius-sm);
+  background: transparent; color: var(--text); text-align: left; cursor: pointer; font-size: 12px;
+}
+.cps-list button:hover { background: var(--surface-hover); }
+.cps-list button[aria-current="true"] { background: var(--accent-soft); border-color: var(--accent); }
+.cps-list i { width: 10px; height: 10px; border-radius: 50%; border: 2.5px solid var(--c); }
+.cps-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
+.cps-where { color: var(--text-3); font: 11px var(--mono); }
+.cps-list b { font: 500 11.5px var(--mono); font-variant-numeric: tabular-nums; color: var(--text-2); min-width: 6ch; text-align: right; }
+.cps-empty { color: var(--text-3); font-size: 12px; padding: 4px 0; }
+
+/* ---------- cyclone phase space: card ---------- */
+.cps-card {
+  position: absolute; z-index: 13;
+  top: calc(var(--topbar-h) + var(--gap) * 2); right: 56px;
+  width: 380px; max-height: calc(100% - var(--topbar-h) - var(--timeline-h) - 200px);
+  overflow-y: auto; padding: 12px 14px 14px;
+  display: flex; flex-direction: column; gap: 10px;
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+  box-shadow: var(--shadow); backdrop-filter: blur(14px) saturate(140%); -webkit-backdrop-filter: blur(14px) saturate(140%);
+}
+.cps-head { display: flex; align-items: flex-start; gap: 8px; }
+.cps-head > div { flex: 1; min-width: 0; }
+.cps-title { font: 600 17px/1.2 var(--display); margin: 0; }
+.cps-sub { color: var(--text-3); font-size: 11.5px; margin: 2px 0 0; }
+.cps-chip { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; font-size: 12.5px; }
+.cps-chip i { width: 10px; height: 10px; border-radius: 50%; border: 2.5px solid var(--c); }
+.cps-vals { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; margin: 8px 0 0; }
+.cps-vals div { background: var(--surface-raised); border-radius: var(--radius-sm); padding: 5px 7px; }
+.cps-vals dt { color: var(--text-3); font-size: 10.5px; }
+.cps-vals dd { margin: 0; font: 500 13px var(--mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.cps-off { color: var(--text-2); font-size: 12px; margin: 0; }
+.cps-diagrams { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.cps-diagrams figure { margin: 0; }
+.cps-diagrams canvas { display: block; width: 100%; aspect-ratio: 1; max-width: 100%; }
+.cps-foot { color: var(--text-3); font-size: 11px; line-height: 1.4; margin: 0; }
+
+@media (max-width: 1120px) {
+  .cps-card { width: 340px; }
+}
+@media (max-width: 760px) {
+  .cps-card {
+    top: auto; right: var(--gap); left: var(--gap); width: auto;
+    bottom: calc(var(--timeline-h) + var(--gap) * 2); max-height: 58%;
+  }
+  .cps-diagrams { gap: 6px; }
+}

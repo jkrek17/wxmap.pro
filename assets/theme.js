@@ -11,10 +11,11 @@
       b.setAttribute('aria-pressed', String(b.getAttribute('data-theme-set') === mode));
     });
   }
-  apply(read());
-  document.addEventListener('DOMContentLoaded', function () {
+  // Wires every theme switch on the page; a page that adds one later calls it again.
+  function bind() {
     apply(read());
-    document.querySelectorAll('[data-theme-set]').forEach(function (b) {
+    document.querySelectorAll('[data-theme-set]:not([data-bound])').forEach(function (b) {
+      b.setAttribute('data-bound', '');
       b.addEventListener('click', function () {
         var mode = b.getAttribute('data-theme-set');
         try { localStorage.setItem(KEY, mode); } catch (e) { /* follow system only */ }
@@ -22,5 +23,8 @@
         document.dispatchEvent(new CustomEvent('wxmap-theme'));
       });
     });
-  });
+  }
+  window.wxmapTheme = { bind: bind };
+  apply(read());
+  document.addEventListener('DOMContentLoaded', bind);
 })();
