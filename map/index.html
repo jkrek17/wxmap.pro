@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Map · wxmap.pro</title>
+<meta name="description" content="Blended marine wind forecast with live cyclone phase space for every tracked low, on one globe.">
+<!-- Where the published marine wind page, its data and the globe kit live on this site. -->
+<meta name="marine-wind-base" content="../marine-wind/">
+<meta name="cyclone-data" content="../cyclone/data/latest/">
+<link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../globe-kit/lib/maplibre-gl.css">
+<link rel="stylesheet" href="../globe-kit/globe-kit.css">
+<link rel="stylesheet" href="../marine-wind/style.css">
+<link rel="stylesheet" href="../assets/tokens.css">
+<link rel="stylesheet" href="../assets/theme.css">
+<link rel="stylesheet" href="map.css">
+<script src="../assets/theme.js"></script>
+</head>
+<body class="loading">
+<!-- map.js copies the marine wind page's map, panels and sheets in here, adds the
+     cyclone layer, then starts the marine wind scripts. -->
+<p class="boot" id="boot">Loading the map…</p>
+<noscript><p class="boot">The map needs JavaScript.</p></noscript>
+<script src="map.js"></script>
+</body>
+</html>

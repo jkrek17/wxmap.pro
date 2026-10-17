@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>wxmap.pro</title>
+<meta name="description" content="Blended marine wind forecasts and live cyclone phase space for the North Atlantic and North Pacific, on one globe.">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="assets/tokens.css">
+<link rel="stylesheet" href="assets/house.css">
+<link rel="stylesheet" href="assets/theme.css">
+<link rel="stylesheet" href="assets/home.css">
+<script src="assets/theme.js"></script>
+</head>
+<body>
+
+<header class="sitebar">
+  <div class="wrap">
+    <a class="brand" href="./" aria-label="wxmap.pro home">
+      <svg viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="14" fill="none" stroke="currentColor" stroke-width="1.6" opacity=".35"/><circle cx="16" cy="16" r="9" fill="none" stroke="currentColor" stroke-width="1.6" opacity=".6"/><circle cx="16" cy="16" r="4" fill="var(--accent)"/></svg>
+      <span>wxmap<span class="tld">.pro</span></span>
+    </a>
+    <nav aria-label="Site">
+      <a href="map/">Map</a>
+      <a href="#blend">Method</a>
+      <div class="theme" role="group" aria-label="Colour theme">
+        <button type="button" data-theme-set="system" aria-label="Use system theme" title="System"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="12" height="8" rx="1.5"/><path d="M6 14h4"/></svg></button>
+        <button type="button" data-theme-set="light" aria-label="Use light theme" title="Light"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="3"/><path d="M8 1.5v1.5M8 13v1.5M1.5 8H3M13 8h1.5M3.4 3.4l1 1M11.6 11.6l1 1M3.4 12.6l1-1M11.6 4.4l1-1"/></svg></button>
+        <button type="button" data-theme-set="dark" aria-label="Use dark theme" title="Dark"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M13 9.5A5.5 5.5 0 0 1 6.5 3a5.5 5.5 0 1 0 6.5 6.5z"/></svg></button>
+      </div>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <section class="hero">
+    <div class="wrap hero-grid">
+      <div class="hero-copy">
+        <p class="eyebrow">Marine forecast guidance · Atlantic &amp; Pacific</p>
+        <h1>Ocean wind and cyclone structure on one globe.</h1>
+        <p class="lede">A blend of the GFS, ECMWF and AIFS forecasts for 10&nbsp;m wind, the ensemble chance of gale, storm and hurricane force, and the phase space of every tracked low, all on one time slider.</p>
+        <div class="actions">
+          <a class="btn btn-primary" href="map/">Open the map
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M3 8h10M9 4l4 4-4 4"/></svg></a>
+          <a class="btn btn-quiet" href="#blend">How the blend works</a>
+        </div>
+        <div class="scale" aria-label="Wind scale">
+          <span><i style="background:var(--calm)"></i>&lt;34 kt</span>
+          <span><i style="background:var(--gale)"></i>Gale 34–47</span>
+          <span><i style="background:var(--storm)"></i>Storm 48–63</span>
+          <span><i style="background:var(--hurricane)"></i>Hurricane force 64+</span>
+        </div>
+      </div>
+      <figure class="hero-figure">
+        <canvas id="hero-flow" aria-label="Animated wind particles circling a deep low, coloured by wind speed"></canvas>
+        <figcaption>Illustration: an idealised 968&nbsp;mb North Atlantic low, coloured on the map's wind scale.</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section class="layers" aria-labelledby="layers-h">
+    <div class="wrap">
+      <p class="eyebrow">On the map</p>
+      <h2 id="layers-h">What you can read off it</h2>
+      <dl class="layer-list">
+        <div>
+          <dt>Blended 10&nbsp;m wind</dt>
+          <dd>GFS, ECMWF and AIFS weighted at each point by how many ensemble members agree with each, plus a share of the member spread so the peaks survive the averaging. Global at 0.25°, out to 5 days.</dd>
+          <dd class="meta num">0.25° · every 6 h to 120 h</dd>
+        </div>
+        <div>
+          <dt>Ensemble chance</dt>
+          <dd>The share of GEFS, ECMWF ENS and AIFS ENS members reaching gale, storm and hurricane force at each point, with the model-agreement layer marking where the guidance splits across a warning threshold.</dd>
+          <dd class="meta num">34 · 48 · 64 kt</dd>
+        </div>
+        <div>
+          <dt>Cyclone phase space</dt>
+          <dd>Every low tracked in the GFS and ECMWF runs, drawn on the map. Select one to see its track in Hart’s 3-D phase space (thermal asymmetry against lower and upper warm or cold core), so tropical transition and warm seclusion show up as they develop.</dd>
+          <dd class="meta num">B · −V<sub>T</sub><sup>L</sup> · −V<sub>T</sub><sup>U</sup></dd>
+        </div>
+      </dl>
+    </div>
+  </section>
+
+  <section class="method" id="blend" aria-labelledby="blend-h">
+    <div class="wrap method-grid">
+      <div class="method-copy">
+        <p class="eyebrow">Method</p>
+        <h2 id="blend-h">Why a blend, and why it adds spread</h2>
+        <p>Averaging three models smooths away the strongest winds. A plain average forecasts only about 70% of the gale area that verifies. Adding a quarter of the ensemble spread, capped at 5&nbsp;kt, puts that area back without inflating the calm regions.</p>
+        <p>The recipe was tuned on 145 hindcast cases and then checked on 200 cases it had never seen, scored against the GFS and ECMWF analyses and against buoy and ship reports. It was tested on 30–67°N in the two OPC basins, and the map marks that area.</p>
+      </div>
+      <dl class="figures">
+        <div><dt class="num">~70%</dt><dd>of verifying gale area caught by a plain three-model average</dd></div>
+        <div><dt class="num">145 / 200</dt><dd>hindcast cases used to tune, then to test out of sample</dd></div>
+        <div><dt class="num">54%</dt><dd>of lone storm-force signals verified when half the members also reached 48&nbsp;kt (17% otherwise)</dd></div>
+      </dl>
+    </div>
+  </section>
+</main>
+
+<footer class="sitefoot">
+  <div class="wrap">
+    <p>Guidance from NOAA GFS and GEFS and ECMWF IFS, ENS and AIFS. Not an official forecast: for warnings see the <a href="https://ocean.weather.gov/">Ocean Prediction Center</a>.</p>
+    <p>© 2026 wxmap.pro</p>
+  </div>
+</footer>
+
+<script src="assets/hero.js"></script>
+</body>
+</html>

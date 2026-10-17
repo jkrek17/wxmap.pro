@@ -1,0 +1,85 @@
+/* wxmap.pro house style: the tokens. Loaded by every page, including the map.
+   Layout: chart-room calm. A light page with navy ink by default, a deep-ocean
+   dark theme, and colour reserved for the wind scale the forecasts are about.
+   Token names match globe-kit (--bg, --surface, --text, --text-2, --accent,
+   --border) so the map page can take these values without renaming anything.
+   Theme: follows the visitor's system; data-theme="light|dark" on <html> wins. */
+
+:root {
+  /* colour, light */
+  --bg: #f4f6f8;            /* chart paper, a little blue */
+  --surface: #ffffff;
+  --surface-2: #e9eef3;
+  --border: #d3dbe4;
+  --border-strong: #aebccb;
+  --text: #0e2236;          /* navy ink */
+  --text-2: #43566b;
+  --text-3: #6b7c8f;
+  --accent: #0a6c96;        /* sounding-line blue */
+  --accent-strong: #08577a;
+  --accent-soft: #dcecf4;
+  --on-accent: #ffffff;
+  /* the wind scale (kt), same hues in both themes, tuned per theme */
+  --calm: #8fb3c9;          /* under 34 kt */
+  --gale: #c99a06;          /* 34-47 kt */
+  --storm: #d4561c;         /* 48-63 kt */
+  --hurricane: #b3155c;     /* 64 kt and over */
+
+  /* type */
+  --display: "IBM Plex Sans Condensed", "Arial Narrow", "Helvetica Neue", Arial, sans-serif;
+  --sans: "IBM Plex Sans", -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+  --step--1: 0.8125rem;
+  --step-0: 1rem;
+  --step-1: 1.25rem;
+  --step-2: 1.75rem;
+  --step-3: clamp(2.25rem, 1.4rem + 3.6vw, 3.75rem);
+
+  /* shape */
+  --radius: 10px;
+  --radius-sm: 6px;
+  --measure: 65ch;
+  --page: 1120px;
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #08121d;
+    --surface: #0e1b29;
+    --surface-2: #142536;
+    --border: #22364b;
+    --border-strong: #35506b;
+    --text: #e4ecf3;
+    --text-2: #a7b7c7;
+    --text-3: #7d90a4;
+    --accent: #5cb8e0;
+    --accent-strong: #84cbea;
+    --accent-soft: #12324a;
+    --on-accent: #06121c;
+    --calm: #4f7e9c;
+    --gale: #e8be3a;
+    --storm: #f07a42;
+    --hurricane: #e2508f;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #08121d;
+  --surface: #0e1b29;
+  --surface-2: #142536;
+  --border: #22364b;
+  --border-strong: #35506b;
+  --text: #e4ecf3;
+  --text-2: #a7b7c7;
+  --text-3: #7d90a4;
+  --accent: #5cb8e0;
+  --accent-strong: #84cbea;
+  --accent-soft: #12324a;
+  --on-accent: #06121c;
+  --calm: #4f7e9c;
+  --gale: #e8be3a;
+  --storm: #f07a42;
+  --hurricane: #e2508f;
+  color-scheme: dark;
+}

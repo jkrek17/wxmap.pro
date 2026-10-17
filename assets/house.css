@@ -1,0 +1,65 @@
+/* wxmap.pro house style: base and shared components for content pages.
+   Colours and type come from tokens.css. */
+
+/* base */
+*, *::before, *::after { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 400 var(--step-0)/1.6 var(--sans);
+  -webkit-font-smoothing: antialiased;
+}
+h1, h2, h3 { font-family: var(--display); font-weight: 600; line-height: 1.1; text-wrap: balance; margin: 0; }
+p { margin: 0; }
+a { color: var(--accent); text-underline-offset: 3px; }
+a:hover { color: var(--accent-strong); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 4px; }
+.wrap {
+  max-width: var(--page);
+  margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.eyebrow {
+  font: 500 var(--step--1)/1.2 var(--mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+.num { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+
+/* site bar */
+.sitebar { border-bottom: 1px solid var(--border); background: var(--surface); }
+.sitebar .wrap { display: flex; align-items: center; gap: 16px; padding-block: 12px; }
+.brand { display: flex; align-items: center; gap: 10px; color: var(--text); text-decoration: none; font: 600 1.125rem/1 var(--display); letter-spacing: 0.01em; }
+.brand svg { width: 26px; height: 26px; flex: none; }
+.brand .tld { color: var(--text-3); font-weight: 400; }
+.sitebar nav { margin-left: auto; display: flex; align-items: center; gap: 4px; }
+.sitebar nav a { color: var(--text-2); text-decoration: none; padding: 6px 10px; border-radius: var(--radius-sm); font-size: 0.9375rem; }
+.sitebar nav a:hover { color: var(--text); background: var(--surface-2); }
+
+/* buttons */
+.btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 11px 18px; border-radius: var(--radius-sm);
+  font: 600 0.9375rem/1 var(--sans); text-decoration: none;
+  border: 1px solid transparent; cursor: pointer;
+}
+.btn-primary { background: var(--accent); color: var(--on-accent); }
+.btn-primary:hover { background: var(--accent-strong); color: var(--on-accent); }
+.btn-quiet { background: transparent; color: var(--text); border-color: var(--border-strong); }
+.btn-quiet:hover { background: var(--surface-2); color: var(--text); }
+
+/* wind scale chips */
+.scale { display: flex; flex-wrap: wrap; gap: 6px 14px; font: 500 var(--step--1)/1.2 var(--mono); color: var(--text-2); }
+.scale span { display: inline-flex; align-items: center; gap: 6px; }
+.scale i { width: 18px; height: 6px; border-radius: 3px; display: inline-block; }
+
+/* footer */
+.sitefoot { border-top: 1px solid var(--border); color: var(--text-3); font-size: var(--step--1); }
+.sitefoot .wrap { display: flex; flex-wrap: wrap; gap: 8px 24px; justify-content: space-between; padding-block: 28px 40px; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
