@@ -4,15 +4,13 @@
    awips-tools cyclone_phase_space/realtime and published at ../cyclone/data/latest/).
    Every tracked low with a point at the marine wind page's valid time gets a ring
    coloured by its Hart class. Selecting one draws its whole track, coloured by class,
-   and opens a card with the two Hart (2003) phase diagrams for the track: thermal
-   asymmetry B against the lower thermal wind, and the upper against the lower
-   thermal wind. The marine wind page says when its map is ready and which valid
+   and opens a card with the track in Hart's 3-D phase space, the cyclone page's own
+   cube (cube.js). The marine wind page says when its map is ready and which valid
    time it shows through the mw:ready, mw:step and mw:overlay events. */
 (function () {
   'use strict';
   var DATA = document.querySelector('meta[name="cyclone-data"]').content;
-  // Hart diagram axis limits, m (awips-tools cyclone_phase_space/article/figures/diagram_style.py)
-  var FIG = { vtl: [-300, 300], vtu: [-300, 300], b: [-20, 80], onset: 10 };
+  var MW = document.querySelector('meta[name="marine-wind-base"]').content + 'data/global/';
   var NAMES = ['Symmetric deep warm core', 'Symmetric shallow warm core', 'Asymmetric deep warm core',
     'Asymmetric shallow warm core', 'Asymmetric cold core', 'Symmetric cold core', 'Shallow cold core'];
   var HEX = ['#d92626', '#cc33bf', '#fad91a', '#33ad40', '#2680e6', '#5938b8', '#b8b8b2'];
@@ -36,7 +34,6 @@
   }
   function num(v, dp) { return v == null || !isFinite(v) ? '–' : (+v).toFixed(dp).replace('-', '−'); }
   function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
-  function token(name) { return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
 
   // ------------------------------------------------------------ data
   function load() {
@@ -55,8 +52,24 @@
         }).filter(function (p) { return isFinite(p.t) && isFinite(p.lat) && isFinite(p.lon); });
         return { key: String(s.id != null ? s.id : s.name), name: label(s.name != null ? s.name : s.id), pts: pts, min: +s.min_mslp || Infinity };
       }).filter(function (s) { return s.pts.length; });
+      window.wxmapCube.setup({ cycle: Date.parse(cycleIso(idx.cycle)), hours: idx.hours || [],
+        classes: function (c) { return { code: c, name: className(c), hex: hex(c) }; }, toValid: toValid, stop: stop });
+      if (S.valid != null) window.wxmapCube.at(S.valid);
     });
   }
+  // The cube's dot clicks: show that hour on the map, through the marine wind time slider.
+  var steps = null;
+  function toValid(t) {
+    steps = steps || fetch(MW + 'manifest.json').then(function (r) { return r.json(); }).then(function (m) {
+      return m.steps.map(function (st) { return Date.parse(st.valid); });
+    });
+    steps.then(function (v) {
+      var i = v.indexOf(t), lead = $('lead');
+      if (i < 0 || !lead) return;
+      lead.value = i; lead.dispatchEvent(new Event('input'));
+    }).catch(function () { steps = null; });
+  }
+  function stop() { var b = $('play'); if (b && b.getAttribute('aria-label') === 'Pause') b.click(); }
   function at(s, t) {
     for (var i = 0; i < s.pts.length; i++) if (Math.abs(s.pts[i].t - t) < 60e3) return s.pts[i];
     return null;
@@ -161,73 +174,23 @@
   }
   function card() {
     var c = $('cps-card'), s = selected();
-    if (!s || !S.on) { c.hidden = true; return; }
+    if (!s || !S.on) { c.hidden = true; window.wxmapCube.close(); return; }
     var p = at(s, S.valid), first = s.pts[0], last = s.pts[s.pts.length - 1];
     var hrs = function (q) { return 'F' + ('00' + q.fhr).slice(-3); };
     c.querySelector('.cps-title').textContent = s.name;
     c.querySelector('.cps-sub').textContent = place(first.lat, first.lon) + ' at ' + hrs(first) + ' to ' + place(last.lat, last.lon) + ' at ' + hrs(last) +
-      ' · ' + (S.index.model || 'GFS') + ' ' + K.fmtTime(cycleIso(S.index.storms_cycle || S.index.cycle)) + ' run';
+      ' · ' + (S.index.model || 'GFS') + ' ' + K.fmtTime(cycleIso(S.index.cycle)) + ' run';
     c.querySelector('.cps-now').innerHTML = p
-      ? '<span class="cps-chip"><i style="--c:' + hex(p.cls) + '"></i>' + esc(className(p.cls)) + '</span>' +
-        '<dl class="cps-vals"><div><dt>MSLP</dt><dd>' + num(p.mslp, 0) + ' mb</dd></div><div><dt>B</dt><dd>' + num(p.b, 0) + ' m</dd></div>' +
-        '<div><dt>−V<sub>T</sub><sup>L</sup></dt><dd>' + num(p.vtl, 0) + '</dd></div><div><dt>−V<sub>T</sub><sup>U</sup></dt><dd>' + num(p.vtu, 0) + '</dd></div></dl>'
-      : '<p class="cps-off">Not tracked at this hour. The diagrams show its whole track.</p>';
+      ? 'Now <b>' + num(p.mslp, 0) + ' mb</b> at ' + place(p.lat, p.lon)
+      : 'Not tracked at this hour; the cube shows its whole track.';
     c.hidden = false;
-    diagram($('cps-d1'), s, p, 'vtl', 'b');
-    diagram($('cps-d2'), s, p, 'vtl', 'vtu');
+    window.wxmapCube.open($('cps-cube'), { key: s.key, label: s.name, pts: s.pts });
   }
   function cycleIso(c) {   // "2026101612" -> ISO
     c = String(c || '');
     return /^\d{10}$/.test(c) ? c.slice(0, 4) + '-' + c.slice(4, 6) + '-' + c.slice(6, 8) + 'T' + c.slice(8, 10) + ':00:00Z' : c;
   }
 
-  // One Hart phase diagram on a canvas: x is -VTL, y is B or -VTU.
-  function diagram(cv, s, now, xf, yf) {
-    var dpr = Math.min(window.devicePixelRatio || 1, 2), W = cv.clientWidth, H = cv.clientHeight;
-    if (!W || !H) return;
-    cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
-    var ctx = cv.getContext('2d'); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, W, H);
-    var L = 34, R = 8, T = 8, B = 28, xr = FIG[xf], yr = FIG[yf];
-    var X = function (v) { return L + (Math.max(xr[0], Math.min(xr[1], v)) - xr[0]) / (xr[1] - xr[0]) * (W - L - R); };
-    var Y = function (v) { return T + (yr[1] - Math.max(yr[0], Math.min(yr[1], v))) / (yr[1] - yr[0]) * (H - T - B); };
-    var ink = token('--text-2'), faint = token('--text-3'), rule = token('--border'), mono = token('--mono') || 'monospace';
-    ctx.strokeStyle = rule; ctx.lineWidth = 1; ctx.strokeRect(L + 0.5, T + 0.5, W - L - R - 1, H - T - B - 1);
-    // zero lines, and the B onset line on the first diagram
-    ctx.strokeStyle = faint; ctx.beginPath(); ctx.moveTo(X(0), T); ctx.lineTo(X(0), H - B);
-    var y0 = yf === 'b' ? FIG.onset : 0; ctx.setLineDash(yf === 'b' ? [4, 3] : []);
-    ctx.moveTo(L, Y(y0)); ctx.lineTo(W - R, Y(y0)); ctx.stroke(); ctx.setLineDash([]);
-    // what each side means, inside the plot along its edges: cold and warm core across,
-    // symmetric and asymmetric (or shallow and deep warm aloft) up the side
-    ctx.font = '500 10px ' + mono; ctx.fillStyle = faint; ctx.textBaseline = 'alphabetic';
-    ctx.textAlign = 'left'; ctx.fillText('cold', L + 4, H - B - 5);
-    ctx.textAlign = 'right'; ctx.fillText('warm', W - R - 4, H - B - 5);
-    ctx.fillText(yf === 'b' ? 'asym' : 'warm aloft', W - R - 4, T + 12);
-    // axes
-    ctx.fillStyle = ink; ctx.textAlign = 'center';
-    [xr[0], 0, xr[1]].forEach(function (v) { ctx.fillText(String(v).replace('-', '−'), X(v), H - B + 13); });
-    ctx.fillText('−VTL', L + (W - L - R) / 2, H - 2);
-    ctx.textAlign = 'right';
-    (yf === 'b' ? [yr[0], FIG.onset, 40, yr[1]] : [yr[0], 0, yr[1]]).forEach(function (v) { ctx.fillText(String(v).replace('-', '−'), L - 4, Y(v) + 3); });
-    ctx.save(); ctx.translate(9, T + (H - T - B) / 2); ctx.rotate(-Math.PI / 2); ctx.textAlign = 'center';
-    ctx.fillText(yf === 'b' ? 'B' : '−VTU', 0, 0); ctx.restore();
-    // the track, coloured by class, start A and end Z as on Hart's diagrams
-    var pts = s.pts.filter(function (p) { return p[xf] != null && p[yf] != null; });
-    ctx.lineWidth = 2;
-    for (var i = 0; i + 1 < pts.length; i++) {
-      ctx.strokeStyle = hex(pts[i].cls); ctx.beginPath();
-      ctx.moveTo(X(pts[i][xf]), Y(pts[i][yf])); ctx.lineTo(X(pts[i + 1][xf]), Y(pts[i + 1][yf])); ctx.stroke();
-    }
-    pts.forEach(function (p) { ctx.fillStyle = hex(p.cls); ctx.beginPath(); ctx.arc(X(p[xf]), Y(p[yf]), 2.2, 0, 2 * Math.PI); ctx.fill(); });
-    if (pts.length) {
-      ctx.font = '600 10px ' + mono; ctx.fillStyle = ink; ctx.textAlign = 'left';
-      ctx.fillText('A', X(pts[0][xf]) + 4, Y(pts[0][yf]) - 4);
-      ctx.fillText('Z', X(pts[pts.length - 1][xf]) + 4, Y(pts[pts.length - 1][yf]) - 4);
-    }
-    if (now && now[xf] != null && now[yf] != null) {
-      ctx.strokeStyle = token('--text'); ctx.lineWidth = 2; ctx.beginPath();
-      ctx.arc(X(now[xf]), Y(now[yf]), 5.5, 0, 2 * Math.PI); ctx.stroke();
-    }
-  }
 
   // ------------------------------------------------------------ wiring
   function buildCard() {
@@ -236,10 +199,7 @@
     c.innerHTML = '<div class="cps-head"><div><h2 class="cps-title"></h2><p class="cps-sub"></p></div>' +
       '<button type="button" class="icon-btn icon-btn-sm" id="cps-close" aria-label="Close phase space">' +
       '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 4l8 8M12 4l-8 8"/></svg></button></div>' +
-      '<div class="cps-now"></div>' +
-      '<div class="cps-diagrams"><figure><canvas id="cps-d1" aria-label="Phase diagram: thermal asymmetry against lower thermal wind"></canvas></figure>' +
-      '<figure><canvas id="cps-d2" aria-label="Phase diagram: upper against lower thermal wind"></canvas></figure></div>' +
-      '<p class="cps-foot">Hart phase space for the whole track, A at the first point and Z at the last; the ring is this hour. Thermal winds in m, 900–600 mb for B.</p>';
+      '<p class="cps-now"></p><div class="cps-cube" id="cps-cube"></div>';
     document.getElementById('app').appendChild(c);
     $('cps-close').addEventListener('click', function () { S.sel = null; draw(); if (S.map) S.map.triggerRepaint(); });
   }
@@ -259,9 +219,11 @@
     if (e.key === 'y' || e.key === 'Y') setOn(!S.on);
     if (e.key === 'Escape' && S.sel) { S.sel = null; draw(); }
   });
-  document.addEventListener('mw:step', function (e) { S.valid = Date.parse(e.detail.valid); draw(); });
-  document.addEventListener('wxmap-theme', card);
-  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', card);
+  document.addEventListener('mw:step', function (e) {
+    S.valid = Date.parse(e.detail.valid);
+    if (S.index) window.wxmapCube.at(S.valid);
+    draw();
+  });
   // map.js runs this before the marine wind app.js, so no event is missed
   document.addEventListener('mw:ready', function (e) {
     S.map = e.detail.map; addLayers(S.map); draw();

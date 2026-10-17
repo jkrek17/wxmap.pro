@@ -10,7 +10,7 @@ map, which is the marine wind forecast with live cyclone phase space on one glob
 | `assets/house.css` | Base and shared components for content pages (site bar, buttons, wind scale chips, footer) |
 | `assets/theme.css`, `assets/theme.js` | Theme switch: follows the system unless the visitor picks light or dark |
 | `assets/home.css`, `assets/hero.js` | Landing page layout and the hero illustration (an idealised low, not data) |
-| `map/` | The map. `map.js` copies the published marine wind page in and runs its scripts unchanged; `cyclones.js` adds the cyclone phase space layer; `map.css` puts the house style on the globe kit. |
+| `map/` | The map. `map.js` copies the published marine wind page in and runs its scripts unchanged; `cyclones.js` adds the cyclone phase space layer; `cube.js` runs the cyclone page's 3-D phase space cube (`../cyclone/space3d.js`, unchanged) on the low's card; `map.css` puts the house style on the globe kit. |
 
 ## House style
 
@@ -28,6 +28,7 @@ Nothing from the two forecast pages is copied here. The map reads, from the same
   marine wind page, built by jkrek17/awips-tools `marine_wind/`. The
   `<meta name="marine-wind-base">` tag tells its scripts where their data is, and they
   announce `mw:ready`, `mw:step` and `mw:overlay` so the cyclone layer can follow the map.
+- `../cyclone/space3d.js`: the cyclone page's cube, which reads a few of that page's globals; `cube.js` declares them.
 - `../cyclone/data/latest/` (index.json, legend.json): the live cyclone phase space run,
   built by awips-tools `cyclone_phase_space/realtime/`.
 - `../globe-kit/`: the shared MapLibre globe, from awips-tools `globe_kit/`.

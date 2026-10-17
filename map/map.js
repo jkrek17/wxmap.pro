@@ -8,8 +8,10 @@
   'use strict';
   var BASE = document.querySelector('meta[name="marine-wind-base"]').content;
   var KIT = '../globe-kit/';
-  // cyclones.js before app.js, so it hears app.js's first mw:ready and mw:step
-  var SCRIPTS = [KIT + 'lib/maplibre-gl.js', KIT + 'globe-kit.js', 'cyclones.js', BASE + 'app.js', BASE + 'scorecard.js'];
+  // the cyclone page's 3-D cube, then cyclones.js before app.js, so it hears
+  // app.js's first mw:ready and mw:step
+  var SCRIPTS = [KIT + 'lib/maplibre-gl.js', KIT + 'globe-kit.js', '../cyclone/space3d.js', 'cube.js', 'cyclones.js',
+    BASE + 'app.js', BASE + 'scorecard.js'];
 
   function fail(msg) {
     var b = document.getElementById('boot');

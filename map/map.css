@@ -110,17 +110,42 @@ a.brand { color: var(--text); text-decoration: none; }
 .cps-head > div { flex: 1; min-width: 0; }
 .cps-title { font: 600 17px/1.2 var(--display); margin: 0; }
 .cps-sub { color: var(--text-3); font-size: 11.5px; margin: 2px 0 0; }
-.cps-chip { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; font-size: 12.5px; }
-.cps-chip i { width: 10px; height: 10px; border-radius: 50%; border: 2.5px solid var(--c); }
-.cps-vals { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; margin: 8px 0 0; }
-.cps-vals div { background: var(--surface-raised); border-radius: var(--radius-sm); padding: 5px 7px; }
-.cps-vals dt { color: var(--text-3); font-size: 10.5px; }
-.cps-vals dd { margin: 0; font: 500 13px var(--mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
-.cps-off { color: var(--text-2); font-size: 12px; margin: 0; }
-.cps-diagrams { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
-.cps-diagrams figure { margin: 0; }
-.cps-diagrams canvas { display: block; width: 100%; aspect-ratio: 1; max-width: 100%; }
-.cps-foot { color: var(--text-3); font-size: 11px; line-height: 1.4; margin: 0; }
+.cps-now { color: var(--text-2); font-size: 12px; margin: 0; }
+.cps-now b { color: var(--text); font: 600 12px var(--mono); }
+
+/* the cube (../cyclone/space3d.js, run by cube.js); these rules follow the cyclone
+   page's style.css. Its view is drawn light on dark, so it keeps a dark ground in
+   both themes. */
+.cps-cube { min-width: 0; }
+.s3d { display: grid; gap: 6px; min-width: 0; }
+.s3d-read {
+  display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: baseline; gap: 0 10px;
+  min-height: 32px; margin: 0; font-size: 11px; line-height: 16px; color: var(--text-2);
+}
+.s3d-h { font: 600 11px/16px var(--mono); color: var(--text); }
+.s3d-at { font: 11px/16px var(--font); color: var(--text-3); }
+.s3d-c { display: inline-flex; align-items: center; gap: 4px; min-width: 0; white-space: nowrap; }
+.s3d-c i, .s3d-key i { flex: none; width: 8px; height: 8px; border-radius: 50%; background: var(--c); }
+.s3d-v { grid-column: 1 / -1; display: flex; gap: 12px; white-space: nowrap; }
+.s3d-t b { font: 11px/16px var(--mono); color: var(--text); font-weight: 600; }
+.s3d-t sub, .s3d-t sup, .s3d-note sub, .s3d-note sup { font-size: 8px; }
+.s3d-u { color: var(--text-3); }
+.s3d-canvas {
+  display: block; width: 100%; max-width: 100%; aspect-ratio: 1; border-radius: var(--radius-sm);
+  background: #0f1829;
+  touch-action: none; cursor: grab; -webkit-user-select: none; user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.s3d-canvas.grabbing { cursor: grabbing; }
+.s3d-canvas.on-dot { cursor: pointer; }
+.s3d-canvas:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.s3d-key {
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 12px;
+  margin: 0; padding: 0; list-style: none; font-size: 11px; line-height: 16px; color: var(--text-2);
+}
+.s3d-key li { display: flex; align-items: center; gap: 6px; min-width: 0; white-space: nowrap; }
+.s3d-key b { font: 600 11px/16px var(--mono); color: var(--text); }
+.s3d-note { margin: 2px 0 0; font-size: 11px; line-height: 16px; color: var(--text-3); }
 
 @media (max-width: 1120px) {
   .cps-card { width: 340px; }
@@ -130,5 +155,4 @@ a.brand { color: var(--text); text-decoration: none; }
     top: auto; right: var(--gap); left: var(--gap); width: auto;
     bottom: calc(var(--timeline-h) + var(--gap) * 2); max-height: 58%;
   }
-  .cps-diagrams { gap: 6px; }
 }
