@@ -19,6 +19,16 @@
 <link rel="stylesheet" href="../assets/theme.css">
 <link rel="stylesheet" href="map.css">
 <script src="../assets/theme.js"></script>
+<!-- Start every download map.js needs at once, so none waits for the one before it.
+     Keep this list the same as map.js's SCRIPTS. -->
+<link rel="preload" href="../marine-wind/index.html" as="fetch" crossorigin>
+<link rel="preload" href="../globe-kit/lib/maplibre-gl.js" as="script">
+<link rel="preload" href="../globe-kit/globe-kit.js" as="script">
+<link rel="preload" href="../cyclone/space3d.js" as="script">
+<link rel="preload" href="cube.js" as="script">
+<link rel="preload" href="cyclones.js" as="script">
+<link rel="preload" href="../marine-wind/app.js" as="script">
+<link rel="preload" href="../marine-wind/scorecard.js" as="script">
 </head>
 <body class="loading">
 <!-- map.js copies the marine wind page's map, panels and sheets in here, adds the

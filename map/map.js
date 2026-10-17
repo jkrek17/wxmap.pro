@@ -17,10 +17,12 @@
     var b = document.getElementById('boot');
     if (b) b.textContent = msg;
   }
+  // All at once: async = false downloads them together and still runs them in order.
   function load(src) {
     return new Promise(function (resolve, reject) {
       var s = document.createElement('script');
       s.src = src;
+      s.async = false;
       s.onload = resolve;
       s.onerror = function () { reject(new Error(src)); };
       document.body.appendChild(s);
@@ -63,7 +65,7 @@
     if (help) help.insertAdjacentHTML('beforeend', '<dt><kbd>Y</kbd></dt><dd>Cyclone phase space lows</dd>');
   }
 
-  fetch(BASE + 'index.html', { cache: 'no-cache' }).then(function (r) {
+  fetch(BASE + 'index.html').then(function (r) {
     if (!r.ok) throw new Error('marine wind page ' + r.status);
     return r.text();
   }).then(function (html) {
@@ -75,7 +77,7 @@
     });
     boot.remove();
     window.wxmapTheme.bind();
-    return SCRIPTS.reduce(function (p, src) { return p.then(function () { return load(src); }); }, Promise.resolve());
+    return Promise.all(SCRIPTS.map(load));
   }).catch(function (e) {
     fail('The map could not load (' + e.message + '). Try again in a minute.');
   });
