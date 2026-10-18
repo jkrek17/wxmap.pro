@@ -46,9 +46,16 @@
       if (leg && leg.classes) leg.classes.forEach(function (c) { HEX[c.code] = c.hex; });
       S.index = idx;
       S.storms = (idx.storms || []).map(function (s) {
-        var seq = Array.isArray(s.cls_seq) && s.cls_seq.length === (s.points || []).length ? s.cls_seq : null;
+        // cls and b are Hart's, from the storm's own motion (clst, hbt) where the
+        // export has them, as on the cyclone page; else the field's steering-flow values.
+        var n = (s.points || []).length;
+        var seq = Array.isArray(s.cls_seq) && s.cls_seq.length === n ? s.cls_seq : null;
+        var seqt = Array.isArray(s.clst_seq) && s.clst_seq.length === n ? s.clst_seq : null;
         var pts = (s.points || []).map(function (p, j) {
-          return { t: Date.parse(p.valid), fhr: p.fhr, lat: +p.lat, lon: +p.lon, mslp: p.mslp, cls: seq ? seq[j] : p.cls, b: p.hb, vtl: p.hvtl, vtu: p.hvtu };
+          var fcls = seq ? seq[j] : p.cls, tcls = seqt ? seqt[j] : p.clst;
+          return { t: Date.parse(p.valid), fhr: p.fhr, lat: +p.lat, lon: +p.lon, mslp: p.mslp,
+            cls: tcls != null ? tcls : fcls, fcls: fcls, clst: tcls != null ? tcls : null,
+            b: p.hbt != null ? p.hbt : p.hb, fb: p.hb, hbt: p.hbt != null ? p.hbt : null, vtl: p.hvtl, vtu: p.hvtu };
         }).filter(function (p) { return isFinite(p.t) && isFinite(p.lat) && isFinite(p.lon); });
         return { key: String(s.id != null ? s.id : s.name), name: label(s.name != null ? s.name : s.id), pts: pts, min: +s.min_mslp || Infinity };
       }).filter(function (s) { return s.pts.length; });
