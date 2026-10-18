@@ -15,8 +15,8 @@ const SHORT = ['sym deep warm', 'sym shallow warm', 'asym deep warm', 'asym shal
 const MINUS = '−';
 const TERM = {
   hb: { name: 'Thermal asymmetry', sym: 'B', band: '900 to 600 hPa' },
-  hvtl: { name: 'Lower thermal wind', sym: `${MINUS}V<sub>T</sub><sup>L</sup>`, band: '925 to 700 hPa' },
-  hvtu: { name: 'Upper thermal wind', sym: `${MINUS}V<sub>T</sub><sup>U</sup>`, band: '500 to 300 hPa' },
+  hvtl: { name: 'Lower thermal wind', sym: `${MINUS}V<sub>T</sub><sup>L</sup>`, band: '900 to 600 hPa' },
+  hvtu: { name: 'Upper thermal wind', sym: `${MINUS}V<sub>T</sub><sup>U</sup>`, band: '600 to 300 hPa' },
 };
 // S.i is the frame on screen in S.index.hours (forecast hours of the cyclone run);
 // -1 when the map shows an hour the run has no frame for.
@@ -28,6 +28,12 @@ const blank = (v) => v == null || v === '' || Number.isNaN(+v);
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
 const pad = (n, w = 2) => (n < 0 ? MINUS : '') + String(Math.abs(n)).padStart(n < 0 ? w - 1 : w, '0');
 const cls = (code) => (CUBE.classes && CUBE.classes(code)) || { code, name: 'No class', hex: '#8a8a86' };
+// B and the class from the storm's own motion (hbt, clst) where the track has
+// them, else the field's (hb, cls): the cyclone page's storms.js and card.js.
+const trackB = (e) => !!e && !blank(e.hbt);
+const bOf = (e) => (trackB(e) ? e.hbt : e?.hb);
+const clsOf = (e) => (e && e.clst != null && !blank(e.clst) ? +e.clst : e?.cls);
+const clsDot = (e) => `<i style="--c:${cls(clsOf(e)).hex}"></i>`;
 function rgba(hex, a) {
   const n = parseInt(hex.slice(1), 16);
   return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${a})`;
@@ -56,14 +62,15 @@ window.wxmapCube = {
     S.index.hours[-1] = h;   // the readout's hour when the run has no frame for it
     if (CUBE.view) CUBE.view.frame();
   },
-  // storm: {key, label, pts: [{t, cls, b, vtl, vtu}]}
+  // storm: {key, label, pts: [{t, fcls, fb, clst, hbt, vtl, vtu}]}: fcls and fb the
+  // field's class and B, clst and hbt those from the storm's motion (null if none).
   open(host, storm) {
     if (CUBE.view && CUBE.key === storm.key && CUBE.view.el.isConnected) { CUBE.view.frame(); return; }
     this.close();
     const at = S.index.hours.map(() => null);
     storm.pts.forEach((p) => {
       const k = S.index.hours.indexOf(Math.round((p.t - CUBE.t0) / 3600e3));
-      if (k >= 0) at[k] = { cls: p.cls, hb: p.b, hvtl: p.vtl, hvtu: p.vtu };
+      if (k >= 0) at[k] = { cls: p.fcls, hb: p.fb, clst: p.clst, hbt: p.hbt, hvtl: p.vtl, hvtu: p.vtu };
     });
     // The cube is drawn light on dark, so its view always sits on a dark ground
     // (.s3d-canvas in map.css) and reads its ink from these values, not the theme's.
