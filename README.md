@@ -10,6 +10,7 @@ map, which is the marine wind forecast with live cyclone phase space on one glob
 | `assets/house.css` | Base and shared components for content pages (site bar, buttons, wind scale chips, footer) |
 | `assets/theme.css`, `assets/theme.js` | Theme switch: follows the system unless the visitor picks light or dark |
 | `assets/home.css`, `assets/hero.js` | Landing page layout and the hero illustration (an idealised low, not data) |
+| `lab/` | The lab (experimental, not linked from the home page): the same marine wind globe with `lab.js`, which draws each GFS low coloured by how rare it is, its Storm Twins card, and the day 5-7 bomb watch. `boot.js` loads the page as `map.js` does; `lab.css` adds to `map/map.css`. Data: `lab/data/lows.json` and `bomb.json`, written on the VPS by jkrek17/marine-research `tools/lab_run.py` (not in this repository). |
 | `map/` | The map. `map.js` copies the published marine wind page in and runs its scripts unchanged; `cyclones.js` adds the cyclone phase space layer; `cube.js` runs the cyclone page's 3-D phase space cube (`../cyclone/space3d.js`, unchanged) on the low's card; `map.css` puts the house style on the globe kit. |
 
 ## House style
@@ -39,8 +40,10 @@ shows up here on its next publish.
 ## Serving
 
 The VPS (jkrek17/vps-config) serves wxmap.pro from two checkouts: this repository for
-`/`, `/assets/` and `/map/`, and jkrek17/web for everything else. The other pages in
+`/`, `/assets/`, `/map/` and `/lab/`, the lab job's output folder for `/lab/data/`, and jkrek17/web
+for everything else. The other pages in
 jkrek17/web stay reachable at their paths but are not linked from here.
 
 Preview locally: put this repository's files beside `globe-kit/`, `marine-wind/` and
-`cyclone/` from a jkrek17/web checkout and run `python3 -m http.server 8000`.
+`cyclone/` from a jkrek17/web checkout and run `python3 -m http.server 8000`. For the lab, run
+`tools/lab_run.py lows --out lab/data` and `... bomb --out lab/data` from a marine-research checkout first.
