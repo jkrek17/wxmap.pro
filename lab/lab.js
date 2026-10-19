@@ -262,7 +262,17 @@
     if (e.key === 'Escape' && S.sel) { S.sel = null; draw(); }
   });
   document.addEventListener('mw:step', function (e) { S.valid = Date.parse(e.detail.valid); draw(); });
+  // The lab starts with the wind page's storm overlays off, so its own layers stand out; they stay
+  // in the Wind layers tab to turn back on. Through the page's own switches, so its state follows.
+  var QUIET = ['ov-lone', 'ov-tested', 'ov-hazard', 'ov-warn', 'ov-track'];
+  function quiet() {
+    QUIET.forEach(function (id) {
+      var x = $(id);
+      if (x && x.checked) { x.checked = false; x.dispatchEvent(new Event('change')); }
+    });
+  }
   document.addEventListener('mw:ready', function (e) {
+    setTimeout(quiet, 0);   // after app.js has wired its switches
     S.map = e.detail.map; addLayers(S.map); draw(); drawBomb();
     S.map.on('moveend', list);
   }, { once: true });

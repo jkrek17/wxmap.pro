@@ -6,6 +6,11 @@
   border: 3px solid; border-color: #c0362c #e8702a #e8b923 #8a8a86;
 }
 
+/* the panel's two tabs: Lab, and the marine wind page's own sections */
+.panel-tabs { margin: 0 14px 4px; }
+.panel-tabs button[aria-selected="true"] { background: var(--accent-soft); color: var(--text); box-shadow: inset 0 0 0 1px var(--accent); }
+#panel[data-tab="lab"] .mw-sec, #panel[data-tab="wind"] .lab-sec { display: none; }
+
 /* bomb watch day buttons */
 .seg { display: flex; gap: 2px; padding: 2px; margin-top: 6px; border: 1px solid var(--border); border-radius: var(--radius-sm); }
 .seg button {

@@ -1,7 +1,7 @@
 /* wxmap.pro lab: experimental storm products on the published marine wind page.
    As map/map.js does for the map, this copies the marine wind page's body in
    (jkrek17/awips-tools marine_wind/page, published at ../marine-wind/), changes the
-   top bar to this site's, adds the lab's panel sections, then runs its scripts
+   top bar to this site's, adds a Lab tab to the panel (the wind page's sections move to a Wind layers tab), then runs its scripts
    unchanged, with lab.js (the lab layers) before app.js so it hears the first
    mw:ready and mw:step. */
 (function () {
@@ -50,17 +50,24 @@
     if (home) home.remove();
     var actions = doc.querySelector('.topbar-actions');
     if (actions) actions.insertBefore(el(THEME), doc.getElementById('btnLayers'));
-    // The lab's sections go above the in-view summary.
-    var summary = doc.getElementById('summary');
-    if (summary) {
-      summary.parentNode.insertBefore(el(
-        '<section class="panel-section" id="lab-lows-sec">' +
+    // The panel gets two tabs: Lab (its own sections, shown first) and Wind (the marine wind
+    // page's sections, unchanged). lab.js turns the wind page's storm overlays off.
+    var panel = doc.getElementById('panel'), head = panel && panel.querySelector('.panel-head');
+    if (panel && head) {
+      Array.prototype.forEach.call(panel.querySelectorAll('.panel-section'), function (sec) { sec.classList.add('mw-sec'); });
+      panel.setAttribute('data-tab', 'lab');
+      var tabs = el('<div class="seg panel-tabs" role="tablist" aria-label="Panel">' +
+        '<button type="button" role="tab" data-tab="lab" aria-selected="true">Lab</button>' +
+        '<button type="button" role="tab" data-tab="wind" aria-selected="false">Wind layers</button></div>');
+      head.after(tabs);
+      tabs.after(el(
+        '<section class="panel-section lab-sec" id="lab-lows-sec">' +
           '<h3>Storm rarity and twins <span class="hint">experimental</span></h3>' +
           '<label class="switch-row"><span><i class="swatch swatch-rare"></i>Lows coloured by how rare</span><input type="checkbox" class="switch" id="ov-rare" checked><kbd>R</kbd></label>' +
           '<ol class="cps-list" id="lab-list" aria-label="Lows at this hour, rarest first"></ol>' +
-        '</section>'), summary);
-      summary.parentNode.insertBefore(el(
-        '<section class="panel-section" id="lab-bomb-sec">' +
+        '</section>'));
+      panel.querySelector('#lab-lows-sec').after(el(
+        '<section class="panel-section lab-sec" id="lab-bomb-sec">' +
           '<h3>Bomb watch <span class="hint">day 5-7, experimental</span></h3>' +
           '<div class="seg" role="radiogroup" aria-label="Bomb watch day" id="bomb-days">' +
             '<button type="button" role="radio" data-day="0" aria-checked="true">Off</button>' +
@@ -69,7 +76,7 @@
             '<button type="button" role="radio" data-day="7" aria-checked="false">Day 7</button>' +
           '</div>' +
           '<p class="lab-note" id="bomb-note">Loading the bomb watch…</p>' +
-        '</section>'), summary);
+        '</section>'));
     }
     var help = doc.querySelector('#helpDialog .shortcuts');
     if (help) help.insertAdjacentHTML('beforeend', '<dt><kbd>R</kbd></dt><dd>Lows coloured by how rare</dd><dt><kbd>B</kbd></dt><dd>Bomb watch: next day, then off</dd>');
@@ -87,6 +94,13 @@
     });
     boot.remove();
     window.wxmapTheme.bind();
+    var panel = document.getElementById('panel');
+    document.querySelectorAll('.panel-tabs [data-tab]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        panel.setAttribute('data-tab', b.getAttribute('data-tab'));
+        document.querySelectorAll('.panel-tabs [data-tab]').forEach(function (x) { x.setAttribute('aria-selected', String(x === b)); });
+      });
+    });
     return Promise.all(SCRIPTS.map(load));
   }).catch(function (e) {
     fail('The lab could not load (' + e.message + '). Try again in a minute.');
