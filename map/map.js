@@ -7,10 +7,11 @@
 (function () {
   'use strict';
   var BASE = document.querySelector('meta[name="marine-wind-base"]').content;
+  var CPS = document.querySelector('meta[name="cyclone-base"]').content;
   var KIT = '../globe-kit/';
-  // the cyclone page's 3-D cube, then cyclones.js before app.js, so it hears
-  // app.js's first mw:ready and mw:step
-  var SCRIPTS = [KIT + 'lib/maplibre-gl.js', KIT + 'globe-kit.js', '../cyclone/space3d.js', 'cube.js', 'cyclones.js',
+  // the cyclone page's markers and 3-D cube, then cyclones.js before app.js, so it
+  // hears app.js's first mw:ready and mw:step
+  var SCRIPTS = [KIT + 'lib/maplibre-gl.js', KIT + 'globe-kit.js', CPS + 'glyphs.js', CPS + 'space3d.js', 'cube.js', 'cyclones.js',
     BASE + 'app.js', BASE + 'scorecard.js'];
 
   function fail(msg) {
@@ -58,8 +59,9 @@
     if (summary) summary.parentNode.insertBefore(el(
       '<section class="panel-section" id="cps-sec">' +
         '<h3>Cyclone phase space <span class="hint">deepest lows in view</span></h3>' +
-        '<label class="switch-row"><span><i class="swatch swatch-cps"></i>Lows coloured by phase</span><input type="checkbox" class="switch" id="ov-cps" checked><kbd>Y</kbd></label>' +
+        '<label class="switch-row"><span><i class="swatch swatch-cps"></i>Lows marked by phase</span><input type="checkbox" class="switch" id="ov-cps" checked><kbd>Y</kbd></label>' +
         '<ol class="cps-list" id="cps-list" aria-label="Deepest lows at this hour"></ol>' +
+        '<ul class="cps-key" id="cps-key" aria-label="Low markers"></ul>' +
       '</section>'), summary);
     var help = doc.querySelector('#helpDialog .shortcuts');
     if (help) help.insertAdjacentHTML('beforeend', '<dt><kbd>Y</kbd></dt><dd>Cyclone phase space lows</dd>');

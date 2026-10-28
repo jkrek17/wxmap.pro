@@ -78,19 +78,30 @@ a.brand { color: var(--text); text-decoration: none; }
 @media (max-width: 760px) { .topbar-actions .theme { display: none; } }
 
 /* ---------- cyclone phase space: panel section ---------- */
+/* the markers are the cyclone page's (glyphs.js): red warm, blue cold lower core */
 .swatch-cps {
   background: transparent; border-radius: 50%; width: 12px; height: 12px;
-  border: 3px solid; border-color: #d92626 #fad91a #2680e6 #33ad40;
+  border: 3px solid; border-color: #e0362c #e0362c #2f74e0 #2f74e0;
 }
 .cps-list { list-style: none; margin: 6px 0 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
 .cps-list button {
-  width: 100%; display: grid; grid-template-columns: 12px minmax(0, 1fr) auto auto; gap: 8px; align-items: center;
+  width: 100%; display: grid; grid-template-columns: 14px minmax(0, 1fr) auto auto; gap: 8px; align-items: center;
   padding: 5px 6px; border: 1px solid transparent; border-radius: var(--radius-sm);
   background: transparent; color: var(--text); text-align: left; cursor: pointer; font-size: 12px;
 }
 .cps-list button:hover { background: var(--surface-hover); }
 .cps-list button[aria-current="true"] { background: var(--accent-soft); border-color: var(--accent); }
-.cps-list i { width: 10px; height: 10px; border-radius: 50%; border: 2.5px solid var(--c); }
+.cps-list .glyph { margin: -2px; }
+/* the gray ring where the field's class differs, as on the cyclone page */
+.glyph-alt { display: inline-flex; flex: none; border-radius: 50%; box-shadow: 0 0 0 1px rgba(5, 10, 20, .9), 0 0 0 2.2px #8b97a8; }
+.glyph-alt .glyph { margin: -4px; }
+.cps-list .glyph-alt { justify-self: center; }
+.cps-key {
+  list-style: none; margin: 8px 0 0; padding: 6px 0 0; border-top: 1px solid var(--border);
+  display: flex; flex-direction: column; gap: 1px; font-size: 11px; color: var(--text-3);
+}
+.cps-key li { display: flex; align-items: center; gap: 2px; }
+.cps-key span { margin-left: 6px; }
 .cps-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
 .cps-where { color: var(--text-3); font: 11px var(--mono); }
 .cps-list b { font: 500 11.5px var(--mono); font-variant-numeric: tabular-nums; color: var(--text-2); min-width: 6ch; text-align: right; }
@@ -113,7 +124,7 @@ a.brand { color: var(--text); text-decoration: none; }
 .cps-now { color: var(--text-2); font-size: 12px; margin: 0; }
 .cps-now b { color: var(--text); font: 600 12px var(--mono); }
 
-/* the cube (../cyclone/space3d.js, run by cube.js); these rules follow the cyclone
+/* the cube (jkrek17.github.io/cyclone/space3d.js, run by cube.js); these rules follow the cyclone
    page's style.css. Its view is drawn light on dark, so it keeps a dark ground in
    both themes. */
 .cps-cube { min-width: 0; }
@@ -125,11 +136,17 @@ a.brand { color: var(--text); text-decoration: none; }
 .s3d-h { font: 600 11px/16px var(--mono); color: var(--text); }
 .s3d-at { font: 11px/16px var(--font); color: var(--text-3); }
 .s3d-c { display: inline-flex; align-items: center; gap: 4px; min-width: 0; white-space: nowrap; }
-.s3d-c i, .s3d-key i { flex: none; width: 8px; height: 8px; border-radius: 50%; background: var(--c); }
+.s3d-c .glyph { flex: none; margin: -4px; }
+.s3d-key .glyph { flex: none; margin: -3px -3px -3px -5px; }
 .s3d-v { grid-column: 1 / -1; display: flex; gap: 12px; white-space: nowrap; }
 .s3d-t b { font: 11px/16px var(--mono); color: var(--text); font-weight: 600; }
 .s3d-t sub, .s3d-t sup, .s3d-note sub, .s3d-note sup { font-size: 8px; }
 .s3d-u { color: var(--text-3); }
+/* the margin to the nearest class wall, and this hour's raw class where the held one differs */
+.s3d-mg { grid-column: 1 / -1; color: var(--text-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.s3d-mg .s3d-raw { color: var(--text-3); }
+.margin { white-space: nowrap; }
+.margin.near::before { content: ''; display: inline-block; width: 6px; height: 6px; margin: 0 5px 0 0; border-radius: 1px; background: #e8a33d; transform: rotate(45deg); vertical-align: 1px; }
 .s3d-canvas {
   display: block; width: 100%; max-width: 100%; aspect-ratio: 1; border-radius: var(--radius-sm);
   background: #0f1829;

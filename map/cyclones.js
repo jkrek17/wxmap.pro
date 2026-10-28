@@ -1,15 +1,18 @@
 /* wxmap.pro map: the cyclone phase space layer on the marine wind globe.
 
    Reads the live cyclone phase space run (index.json and legend.json, made by
-   awips-tools cyclone_phase_space/realtime and published at ../cyclone/data/latest/).
-   Every tracked low with a point at the marine wind page's valid time gets a ring
-   coloured by its Hart class. Selecting one draws its whole track, coloured by class,
-   and opens a card with the track in Hart's 3-D phase space, the cyclone page's own
-   cube (cube.js). The marine wind page says when its map is ready and which valid
+   jkrek17/cyclone cyclone_phase_space/realtime and published at
+   jkrek17.github.io/cyclone/data/latest/). Every tracked low with a point at the
+   marine wind page's valid time gets the cyclone page's marker (glyphs.js): color the
+   lower core, red warm and blue cold; a triangle asymmetric, a circle symmetric;
+   filled deep, a hollow ring shallow; sized by central pressure, with a thin gray
+   ring where the field's class differs. Selecting one draws its whole track, colored
+   by the lower core with a small marker every 6 h, and opens a card with the track
+   in Hart's 3-D phase space, the cyclone page's own cube (cube.js). The marine wind page says when its map is ready and which valid
    time it shows through the mw:ready, mw:step and mw:overlay events. */
 (function () {
   'use strict';
-  var DATA = document.querySelector('meta[name="cyclone-data"]').content;
+  var DATA = document.querySelector('meta[name="cyclone-base"]').content + 'data/latest/';
   var MW = document.querySelector('meta[name="marine-wind-base"]').content + 'data/global/';
   var NAMES = ['Symmetric deep warm core', 'Symmetric shallow warm core', 'Asymmetric deep warm core',
     'Asymmetric shallow warm core', 'Asymmetric cold core', 'Symmetric cold core', 'Shallow cold core'];
@@ -22,6 +25,16 @@
   var S = { index: null, storms: [], valid: null, map: null, on: true, sel: null, proj: null };
 
   function hex(c) { return c == null || HEX[c] == null ? NONE : HEX[c]; }
+  // A point as the cyclone page's code reads it (glyphs.js, cube.js): the field's
+  // class and B, and those from the storm's own motion.
+  function entry(p) { return { cls: p.fcls, hb: p.fb, clst: p.clst, hbt: p.hbt, clsh: p.clsh, margin: p.margin, hvtl: p.vtl, hvtu: p.vtu }; }
+  // The marker's properties: its image, and alt where the two classes differ.
+  function mark(p, props) {
+    var e = entry(p), a = axesOf(e);
+    if (a) props.glyph = glyphName(a); else props.hex = coreHexOf(null);
+    if (classDiffers(e)) props.alt = true;
+    return props;
+  }
   function className(c) { return c == null || NAMES[c] == null ? 'No class' : NAMES[c]; }
   function label(name) {
     var m = /^AUTO_\d{6}_(\d+)$/.exec(name);
@@ -46,20 +59,21 @@
       if (leg && leg.classes) leg.classes.forEach(function (c) { HEX[c.code] = c.hex; });
       S.index = idx;
       S.storms = (idx.storms || []).map(function (s) {
-        // cls and b are Hart's, from the storm's own motion (clst, hbt) where the
-        // export has them, as on the cyclone page; else the field's steering-flow values.
+        // The field's class and B (fcls, fb), those from the storm's own motion (clst,
+        // hbt) and the held class (clsh); the class shown is the cyclone page's clsOf.
         var n = (s.points || []).length;
         var seq = Array.isArray(s.cls_seq) && s.cls_seq.length === n ? s.cls_seq : null;
         var seqt = Array.isArray(s.clst_seq) && s.clst_seq.length === n ? s.clst_seq : null;
+        var seqh = Array.isArray(s.clsh_seq) && s.clsh_seq.length === n ? s.clsh_seq : null;
         var pts = (s.points || []).map(function (p, j) {
-          var fcls = seq ? seq[j] : p.cls, tcls = seqt ? seqt[j] : p.clst;
+          var fcls = seq ? seq[j] : p.cls, tcls = seqt ? seqt[j] : p.clst, hcls = seqh ? seqh[j] : p.clsh;
           return { t: Date.parse(p.valid), fhr: p.fhr, lat: +p.lat, lon: +p.lon, mslp: p.mslp,
-            cls: tcls != null ? tcls : fcls, fcls: fcls, clst: tcls != null ? tcls : null,
-            b: p.hbt != null ? p.hbt : p.hb, fb: p.hb, hbt: p.hbt != null ? p.hbt : null, vtl: p.hvtl, vtu: p.hvtu };
+            fcls: fcls, clst: tcls != null ? tcls : null, clsh: hcls != null ? hcls : null, margin: p.margin != null ? p.margin : null,
+            fb: p.hb, hbt: p.hbt != null ? p.hbt : null, vtl: p.hvtl, vtu: p.hvtu };
         }).filter(function (p) { return isFinite(p.t) && isFinite(p.lat) && isFinite(p.lon); });
         return { key: String(s.id != null ? s.id : s.name), name: label(s.name != null ? s.name : s.id), pts: pts, min: +s.min_mslp || Infinity };
       }).filter(function (s) { return s.pts.length; });
-      window.wxmapCube.setup({ cycle: Date.parse(cycleIso(idx.cycle)), hours: idx.hours || [],
+      window.wxmapCube.setup({ cycle: Date.parse(cycleIso(idx.cycle)), hours: idx.hours || [], hysteresis: idx.hysteresis,
         classes: function (c) { return { code: c, name: className(c), hex: hex(c) }; }, toValid: toValid, stop: stop });
       if (S.valid != null) window.wxmapCube.at(S.valid);
     });
@@ -93,20 +107,33 @@
   function addLayers(map) {
     map.addSource('cps-track', { type: 'geojson', data: fc([]) });
     map.addSource('cps-now', { type: 'geojson', data: fc([]) });
-    map.addLayer({ id: 'cps-track-halo', type: 'line', source: 'cps-track', layout: { 'line-cap': 'round' }, paint: { 'line-color': 'rgba(5,10,20,0.75)', 'line-width': 5 } });
-    map.addLayer({ id: 'cps-track', type: 'line', source: 'cps-track', layout: { 'line-cap': 'round' }, paint: { 'line-color': ['get', 'hex'], 'line-width': 2.6 } });
-    map.addLayer({ id: 'cps-dots', type: 'circle', source: 'cps-track', filter: ['==', ['geometry-type'], 'Point'], paint: { 'circle-radius': 2.6, 'circle-color': ['get', 'hex'], 'circle-stroke-color': 'rgba(5,10,20,0.75)', 'circle-stroke-width': 1 } });
-    map.addLayer({ id: 'cps-now-halo', type: 'circle', source: 'cps-now', paint: {
-      'circle-radius': ['get', 'r'], 'circle-color': 'rgba(0,0,0,0)', 'circle-stroke-color': 'rgba(5,10,20,0.7)', 'circle-stroke-width': ['case', ['get', 'sel'], 6.5, 5] } });
-    map.addLayer({ id: 'cps-now', type: 'circle', source: 'cps-now', paint: {
-      'circle-radius': ['get', 'r'], 'circle-color': 'rgba(0,0,0,0)', 'circle-stroke-color': ['get', 'hex'], 'circle-stroke-width': ['case', ['get', 'sel'], 4, 2.6] } });
-    // a transparent hit area so a ring is easy to tap
-    map.addLayer({ id: 'cps-hit', type: 'circle', source: 'cps-now', paint: { 'circle-radius': ['+', ['get', 'r'], 6], 'circle-color': 'rgba(0,0,0,0)' } });
+    addGlyphImages(map);
+    // the marker images go if the style is ever replaced; put them back on demand
+    map.on('styleimagemissing', function (e) { if (/^g-[01]{3}$/.test(e.id)) addGlyphImages(map); });
+    var line = ['==', ['geometry-type'], 'LineString'], pt = ['==', ['geometry-type'], 'Point'];
+    map.addLayer({ id: 'cps-track-halo', type: 'line', source: 'cps-track', filter: line, layout: { 'line-cap': 'round' }, paint: { 'line-color': 'rgba(5,10,20,0.75)', 'line-width': 5 } });
+    map.addLayer({ id: 'cps-track', type: 'line', source: 'cps-track', filter: line, layout: { 'line-cap': 'round' }, paint: { 'line-color': ['get', 'hex'], 'line-width': 2.6 } });
+    map.addLayer({ id: 'cps-dots', type: 'circle', source: 'cps-track', filter: ['all', pt, ['!', ['has', 'glyph']]], paint: { 'circle-radius': 2.6, 'circle-color': ['get', 'hex'], 'circle-stroke-color': 'rgba(5,10,20,0.75)', 'circle-stroke-width': 1 } });
+    map.addLayer({ id: 'cps-dots-glyph', type: 'symbol', source: 'cps-track', filter: ['all', pt, ['has', 'glyph']],
+      layout: { 'icon-image': ['get', 'glyph'], 'icon-size': 0.7, 'icon-allow-overlap': true, 'icon-ignore-placement': true } });
+    // the selected low's ring, the gray ring where the classes differ, then the marker
+    map.addLayer({ id: 'cps-now-sel', type: 'circle', source: 'cps-now', filter: ['get', 'sel'], paint: {
+      'circle-radius': ['+', ['*', ['get', 'k'], GLYPH.r * 1.35], 6], 'circle-color': 'rgba(0,0,0,0)',
+      'circle-stroke-color': '#e7eef8', 'circle-stroke-width': 1.8 } });
+    map.addLayer({ id: 'cps-now-alt', type: 'circle', source: 'cps-now', filter: ['has', 'alt'], paint: {
+      'circle-radius': ['+', ['*', ['get', 'k'], GLYPH.r * 1.35], 2.5], 'circle-color': 'rgba(11,18,32,0.85)',
+      'circle-stroke-color': GLYPH_ALT, 'circle-stroke-width': 1.4 } });
+    map.addLayer({ id: 'cps-now', type: 'circle', source: 'cps-now', filter: ['!', ['has', 'glyph']], paint: {
+      'circle-radius': ['*', ['get', 'k'], GLYPH.r - 1], 'circle-color': ['get', 'hex'], 'circle-stroke-color': 'rgba(5,10,20,0.75)', 'circle-stroke-width': 1 } });
+    map.addLayer({ id: 'cps-now-glyph', type: 'symbol', source: 'cps-now', filter: ['has', 'glyph'],
+      layout: { 'icon-image': ['get', 'glyph'], 'icon-size': ['get', 'k'], 'icon-allow-overlap': true, 'icon-ignore-placement': true } });
+    map.addLayer({ id: 'cps-hit', type: 'circle', source: 'cps-now', paint: { 'circle-radius': ['+', ['*', ['get', 'k'], GLYPH.r], 6], 'circle-color': 'rgba(0,0,0,0)' } });
     map.on('click', 'cps-hit', function (e) { if (S.on && e.features.length) select(e.features[0].properties.key, false); });
     map.on('mouseenter', 'cps-hit', function () { if (S.on) map.getCanvas().style.cursor = 'pointer'; });
     map.on('mouseleave', 'cps-hit', function () { map.getCanvas().style.cursor = ''; });
   }
-  function radius(mslp) { return Math.max(7, Math.min(15, 7 + (1012 - (mslp || 1012)) / 5)); }
+  // the marker's scale by central pressure, deeper bigger: 1 at 1000 mb and up, 1.6 by 952 mb
+  function size(mslp) { return Math.max(1, Math.min(1.6, 1 + (1000 - (mslp || 1012)) / 80)); }
   function seg(a, b, props) {   // short way round across the date line
     var lb = b.lon; while (lb - a.lon > 180) lb -= 360; while (a.lon - lb > 180) lb += 360;
     return { type: 'Feature', properties: props, geometry: { type: 'LineString', coordinates: [[a.lon, a.lat], [lb, b.lat]] } };
@@ -115,16 +142,16 @@
     var map = S.map;
     if (!map || !map.getSource('cps-now')) return;
     var vis = S.on ? 'visible' : 'none';
-    ['cps-track-halo', 'cps-track', 'cps-dots', 'cps-now-halo', 'cps-now', 'cps-hit'].forEach(function (id) { map.setLayoutProperty(id, 'visibility', vis); });
+    ['cps-track-halo', 'cps-track', 'cps-dots', 'cps-dots-glyph', 'cps-now-sel', 'cps-now-alt', 'cps-now', 'cps-now-glyph', 'cps-hit'].forEach(function (id) { map.setLayoutProperty(id, 'visibility', vis); });
     var now = live().map(function (x) {
-      return { type: 'Feature', properties: { key: x.s.key, hex: hex(x.p.cls), r: radius(x.p.mslp), sel: S.sel === x.s.key },
+      return { type: 'Feature', properties: mark(x.p, { key: x.s.key, k: size(x.p.mslp), sel: S.sel === x.s.key }),
         geometry: { type: 'Point', coordinates: [x.p.lon, x.p.lat] } };
     });
     map.getSource('cps-now').setData(fc(now));
     var s = selected(), tr = [];
     if (s) {
-      for (var i = 0; i + 1 < s.pts.length; i++) tr.push(seg(s.pts[i], s.pts[i + 1], { hex: hex(s.pts[i].cls) }));
-      s.pts.forEach(function (p) { tr.push({ type: 'Feature', properties: { hex: hex(p.cls) }, geometry: { type: 'Point', coordinates: [p.lon, p.lat] } }); });
+      for (var i = 0; i + 1 < s.pts.length; i++) tr.push(seg(s.pts[i], s.pts[i + 1], { hex: coreHexOf(clsOf(entry(s.pts[i]))) }));
+      s.pts.forEach(function (p) { tr.push({ type: 'Feature', properties: mark(p, {}), geometry: { type: 'Point', coordinates: [p.lon, p.lat] } }); });
     }
     map.getSource('cps-track').setData(fc(tr));
     list();
@@ -138,7 +165,7 @@
     var p = at(s, S.valid) || null, d = e.detail, ctx = d.ctx;
     if (!p) return;
     d.proj(p.lon, p.lat).forEach(function (q) {
-      var r = radius(p.mslp) + 6, text = s.name + (p.mslp ? ' · ' + Math.round(p.mslp) : '');
+      var r = Math.ceil(GLYPH.r * 1.35 * size(p.mslp)) + 8, text = s.name + (p.mslp ? ' · ' + Math.round(p.mslp) : '');
       ctx.font = '600 12px ' + d.font;
       ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(5,10,20,0.85)'; ctx.fillStyle = '#ffffff';
       ctx.strokeText(text, q.x + r, q.y - r / 2); ctx.fillText(text, q.x + r, q.y - r / 2);
@@ -158,7 +185,7 @@
     if (!rows.length) { ol.innerHTML = '<li class="cps-empty">No tracked lows in view at this hour.</li>'; return; }
     ol.innerHTML = rows.map(function (x) {
       return '<li><button type="button" data-key="' + esc(x.s.key) + '"' + (S.sel === x.s.key ? ' aria-current="true"' : '') + '>' +
-        '<i style="--c:' + hex(x.p.cls) + '"></i><span class="cps-name">' + esc(x.s.name) + '</span>' +
+        glyphDot(entry(x.p), 18) + '<span class="cps-name">' + esc(x.s.name) + '</span>' +
         '<span class="cps-where">' + place(x.p.lat, x.p.lon) + '</span><b>' + (x.p.mslp ? Math.round(x.p.mslp) + ' mb' : '') + '</b></button></li>';
     }).join('');
   }
@@ -215,7 +242,18 @@
     if (S.map) S.map.triggerRepaint();
   }
 
+  // The key under the list: the cyclone page's markers, one axis at a time.
+  function key() {
+    var ul = $('cps-key'); if (!ul) return;
+    var rows = [[{ lo: 1, up: 1, asym: false }, { lo: 0, up: 0, asym: false }, 'Lower core warm, cold'],
+      [{ lo: 0, up: 0, asym: false }, { lo: 0, up: 0, asym: true }, 'Symmetric, asymmetric'],
+      [{ lo: 1, up: 1, asym: false }, { lo: 1, up: 0, asym: false }, 'Deep, shallow']];
+    ul.title = GLYPH_HELP;
+    ul.innerHTML = rows.map(function (r) { return '<li>' + glyphSVG(r[0], 16) + glyphSVG(r[1], 16) + '<span>' + r[2] + '</span></li>'; }).join('');
+  }
+
   buildCard();
+  key();
   list();
   $('ov-cps').addEventListener('change', function (e) { setOn(e.target.checked); });
   $('cps-list').addEventListener('click', function (e) {
