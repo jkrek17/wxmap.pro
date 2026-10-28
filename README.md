@@ -11,7 +11,7 @@ map, which is the marine wind forecast with live cyclone phase space on one glob
 | `assets/theme.css`, `assets/theme.js` | Theme switch: follows the system unless the visitor picks light or dark |
 | `assets/home.css`, `assets/hero.js` | Landing page layout and the hero illustration (an idealised low, not data) |
 | `lab/` | The lab (experimental, not linked from the home page): the same marine wind globe with `lab.js`, which draws each GFS low coloured by how rare it is, its Storm Twins card, and the day 5-7 bomb watch. `boot.js` loads the page as `map.js` does; `lab.css` adds to `map/map.css`. Data: `lab/data/lows.json` and `bomb.json`, written on the VPS by jkrek17/marine-research `tools/lab_run.py` (not in this repository). |
-| `map/` | The map. `map.js` copies the published marine wind page in and runs its scripts unchanged; `cyclones.js` adds the cyclone phase space layer; `cube.js` runs the cyclone page's 3-D phase space cube (`../cyclone/space3d.js`, unchanged) on the low's card; `map.css` puts the house style on the globe kit. |
+| `map/` | The map. `map.js` copies the published marine wind page in and runs its scripts unchanged; `cyclones.js` adds the cyclone phase space layer; `cube.js` runs the cyclone page's 3-D phase space cube (`space3d.js` from jkrek17.github.io/cyclone, unchanged) on the low's card; `map.css` puts the house style on the globe kit. |
 
 ## House style
 
@@ -23,19 +23,25 @@ map, which is the marine wind forecast with live cyclone phase space on one glob
 
 ## How the map is put together
 
-Nothing from the two forecast pages is copied here. The map reads, from the same site:
+Nothing from the two forecast pages is copied here. The map reads, from this site:
 
 - `../marine-wind/` (index.html, app.js, scorecard.js, style.css and data): the published
   marine wind page, built by jkrek17/awips-tools `marine_wind/`. The
   `<meta name="marine-wind-base">` tag tells its scripts where their data is, and they
   announce `mw:ready`, `mw:step` and `mw:overlay` so the cyclone layer can follow the map.
-- `../cyclone/space3d.js`: the cyclone page's cube, which reads a few of that page's globals; `cube.js` declares them.
-- `../cyclone/data/latest/` (index.json, legend.json): the live cyclone phase space run,
-  built by awips-tools `cyclone_phase_space/realtime/`.
 - `../globe-kit/`: the shared MapLibre globe, from awips-tools `globe_kit/`.
 
-All three are published to jkrek17/web by awips-tools. A change to the marine wind page
-shows up here on its next publish.
+Both are published to jkrek17/web by awips-tools. A change to the marine wind page
+shows up here on its next publish. From the cyclone page's own site,
+https://jkrek17.github.io/cyclone/ (jkrek17/cyclone; the `<meta name="cyclone-base">` tag):
+
+- `glyphs.js` and `space3d.js`: the cyclone page's low markers (marker B: color the lower
+  core, shape the symmetry, fill the depth) and its cube, which read a few of that page's
+  globals; `cube.js` declares them.
+- `data/latest/` (index.json, legend.json): the live cyclone phase space run, built by
+  jkrek17/cyclone `cyclone_phase_space/realtime/`.
+
+A change to the cyclone page's markers or cube shows up here as soon as it publishes.
 
 ## Serving
 
@@ -44,6 +50,6 @@ The VPS (jkrek17/vps-config) serves wxmap.pro from two checkouts: this repositor
 for everything else. The other pages in
 jkrek17/web stay reachable at their paths but are not linked from here.
 
-Preview locally: put this repository's files beside `globe-kit/`, `marine-wind/` and
-`cyclone/` from a jkrek17/web checkout and run `python3 -m http.server 8000`. For the lab, run
+Preview locally: put this repository's files beside `globe-kit/` and `marine-wind/`
+from a jkrek17/web checkout and run `python3 -m http.server 8000`. For the lab, run
 `tools/lab_run.py lows --out lab/data` and `... bomb --out lab/data` from a marine-research checkout first.

@@ -7,7 +7,9 @@
 <meta name="description" content="Blended marine wind forecast with live cyclone phase space for every tracked low, on one globe.">
 <!-- Where the published marine wind page, its data and the globe kit live on this site. -->
 <meta name="marine-wind-base" content="../marine-wind/">
-<meta name="cyclone-data" content="../cyclone/data/latest/">
+<!-- The cyclone phase space page (jkrek17/cyclone) publishes its scripts and live data
+     on its own GitHub Pages site; the map loads both from there. -->
+<meta name="cyclone-base" content="https://jkrek17.github.io/cyclone/">
 <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -24,7 +26,9 @@
 <link rel="preload" href="../marine-wind/index.html" as="fetch" crossorigin>
 <link rel="preload" href="../globe-kit/lib/maplibre-gl.js" as="script">
 <link rel="preload" href="../globe-kit/globe-kit.js" as="script">
-<link rel="preload" href="../cyclone/space3d.js" as="script">
+<link rel="preconnect" href="https://jkrek17.github.io">
+<link rel="preload" href="https://jkrek17.github.io/cyclone/glyphs.js" as="script">
+<link rel="preload" href="https://jkrek17.github.io/cyclone/space3d.js" as="script">
 <link rel="preload" href="cube.js" as="script">
 <link rel="preload" href="cyclones.js" as="script">
 <link rel="preload" href="../marine-wind/app.js" as="script">
