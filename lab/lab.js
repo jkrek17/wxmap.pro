@@ -24,7 +24,7 @@
 
   var K = window.GlobeKit;
   var $ = function (id) { return document.getElementById(id); };
-  var S = { lows: null, bomb: null, valid: null, map: null, on: true, sel: null, proj: null, day: 0, cell: null, err: {} };
+  var S = { lows: null, bomb: null, valid: null, map: null, on: true, sel: null, proj: null, day: 5, cell: null, err: {} };
 
   function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
   function place(lat, lon) {
@@ -65,9 +65,22 @@
     }).catch(function (e) { S.err.lows = e.message; list(); });
     get('bomb.json').then(function (d) { S.bomb = d; drawBomb(); }).catch(function (e) { S.err.bomb = e.message; note(); });
   }
-  function live() {   // lows at the shown valid time, rarest first
-    if (!S.lows || S.valid == null) return [];
-    return S.lows.lows.filter(function (l) { return Math.abs(l.t - S.valid) < 60e3; })
+  // The lows come every 12 h but the wind page steps every 6 h (or less), so the lab shows the
+  // lows of the GFS hour nearest the shown time, up to 6 h away (the earlier one on a tie).
+  var HALF = 6 * 3600e3;
+  function lowsTime() {
+    if (!S.lows || S.valid == null) return null;
+    var best = null;
+    S.lows.lows.forEach(function (l) {
+      var d = Math.abs(l.t - S.valid);
+      if (d <= HALF && (best == null || d < Math.abs(best - S.valid) || (d === Math.abs(best - S.valid) && l.t < best))) best = l.t;
+    });
+    return best;
+  }
+  function live() {   // lows at the GFS hour nearest the shown valid time, rarest first
+    var t = lowsTime();
+    if (t == null) return [];
+    return S.lows.lows.filter(function (l) { return l.t === t; })
       .sort(function (a, b) { return (b.rarity.pct || 0) - (a.rarity.pct || 0) || a.hpa - b.hpa; });
   }
   function selected() {
@@ -135,7 +148,7 @@
   document.addEventListener('mw:overlay', function (e) {
     var first = !S.proj; S.proj = e.detail.proj;
     if (first) list();
-    var l = selected(); if (!S.on || !l || Math.abs(l.t - S.valid) > 60e3) return;
+    var l = selected(); if (!S.on || !l || l.t !== lowsTime()) return;
     var d = e.detail, ctx = d.ctx;
     d.proj(l.lon, l.lat).forEach(function (q) {
       var r = radius(l.hpa) + 6, text = Math.round(l.hpa) + ' mb' + (l.rarity.pct != null ? ' · ' + Math.round(l.rarity.pct) + '%' : '');
@@ -161,7 +174,9 @@
         esc(K.fmtTime(cycleIso(S.lows.cycle))) + ' run has them every 12 h from F012 to F072.</li>';
       return;
     }
-    ol.innerHTML = rows.map(function (l) {
+    var t = lowsTime(), at = Math.abs(t - S.valid) > 60e3
+      ? '<li class="cps-empty">Lows at ' + esc(K.fmtTime(new Date(t).toISOString())) + ', the nearest GFS hour.</li>' : '';
+    ol.innerHTML = at + rows.map(function (l) {
       var p = l.rarity.pct;
       return '<li><button type="button" data-key="' + esc(l.key) + '"' + (S.sel === l.key ? ' aria-current="true"' : '') + '>' +
         '<i style="--c:' + rare(p)[1] + '"></i><span class="cps-name">' + (p == null ? 'No reference' : 'Deeper than ' + Math.round(p) + '%') + '</span>' +
