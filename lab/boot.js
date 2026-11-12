@@ -46,8 +46,12 @@
         '<div class="brand-text"><h1 id="title">wxmap<span class="tld">.pro</span></h1><p>Lab · experimental</p></div></a>');
       brand.replaceWith(a);
     }
+    // The wind page's "All projects" link becomes a link back to the map.
     var home = doc.getElementById('homeLink');
-    if (home) home.remove();
+    if (home) home.replaceWith(el('<a class="btn btn-ghost" id="mapLink" href="../map/" title="The marine wind and cyclone phase space map">Map</a>'));
+    // The wind page's Recipe link is relative to its own folder.
+    var recipe = doc.getElementById('recipeLink');
+    if (recipe) recipe.setAttribute('href', BASE + 'recipe/');
     var actions = doc.querySelector('.topbar-actions');
     if (actions) actions.insertBefore(el(THEME), doc.getElementById('btnLayers'));
     // The panel gets two tabs: Lab (its own sections, shown first) and Wind (the marine wind
@@ -70,8 +74,8 @@
         '<section class="panel-section lab-sec" id="lab-bomb-sec">' +
           '<h3>Bomb watch <span class="hint">day 5-7, experimental</span></h3>' +
           '<div class="seg" role="radiogroup" aria-label="Bomb watch day" id="bomb-days">' +
-            '<button type="button" role="radio" data-day="0" aria-checked="true">Off</button>' +
-            '<button type="button" role="radio" data-day="5" aria-checked="false">Day 5</button>' +
+            '<button type="button" role="radio" data-day="0" aria-checked="false">Off</button>' +
+            '<button type="button" role="radio" data-day="5" aria-checked="true">Day 5</button>' +
             '<button type="button" role="radio" data-day="6" aria-checked="false">Day 6</button>' +
             '<button type="button" role="radio" data-day="7" aria-checked="false">Day 7</button>' +
           '</div>' +
