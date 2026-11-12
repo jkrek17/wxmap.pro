@@ -49,6 +49,9 @@
     // The wind page's "All projects" link becomes a link back to the map.
     var home = doc.getElementById('homeLink');
     if (home) home.replaceWith(el('<a class="btn btn-ghost" id="mapLink" href="../map/" title="The marine wind and cyclone phase space map">Map</a>'));
+    // The wind page's Recipe link is relative to its own folder.
+    var recipe = doc.getElementById('recipeLink');
+    if (recipe) recipe.setAttribute('href', BASE + 'recipe/');
     var actions = doc.querySelector('.topbar-actions');
     if (actions) actions.insertBefore(el(THEME), doc.getElementById('btnLayers'));
     // The panel gets two tabs: Lab (its own sections, shown first) and Wind (the marine wind

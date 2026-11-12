@@ -53,6 +53,9 @@
     // The wind page's "All projects" link becomes a link to the lab.
     var home = doc.getElementById('homeLink');
     if (home) home.replaceWith(el('<a class="btn btn-ghost" id="labLink" href="../lab/" title="Experimental: how rare each low is, its Storm Twins and the day 5-7 bomb watch">Lab</a>'));
+    // The wind page's Recipe link is relative to its own folder.
+    var recipe = doc.getElementById('recipeLink');
+    if (recipe) recipe.setAttribute('href', BASE + 'recipe/');
     var actions = doc.querySelector('.topbar-actions');
     if (actions) actions.insertBefore(el(THEME), doc.getElementById('btnLayers'));
     // The cyclone controls go above the in-view summary.
