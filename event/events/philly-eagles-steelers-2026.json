@@ -16,31 +16,28 @@
     }
   ],
   "briefing": {
-    "issued": "2026-11-17T09:45",
+    "issued": "2026-11-17T10:15",
     "tzabbr": "EST",
-    "headline": "A dry, sunny Saturday, then a coastal low brings a real chance of rain from Sunday afternoon into early Monday. The game itself (1 PM) looks mild, near 60°, with about a 40% chance of showers that grows late in the game.",
+    "headline": "Saturday is dry and sunny. Sunday's game looks mild, near 60°, but bring rain gear. Showers are possible during the game, and rain is more likely Sunday evening and night.",
     "sections": [
       {
-        "title": "The big picture",
-        "text": "High pressure (about 1028 mb) sits right over the Mid-Atlantic on Saturday. Meanwhile a weak low forms off the Southeast coast and drifts north on Sunday, while a cold front comes in from the Great Lakes. Where that coastal low goes decides Sunday. **GFS, the ECMWF AI model (AIFS) and the Canadian model bring its rain into Philadelphia from Sunday afternoon to early Monday.** The ECMWF and German models keep it offshore and dry. The front sweeps through early Monday, and behind it the wind turns northwest and picks up."
-      },
-      {
         "title": "Saturday",
-        "text": "**Dry, with lots of sun.** It is cold at 7 AM (upper 30s to mid 40s) and warms to the low to mid 60s by mid-afternoon. The air is fairly dry (dew points 35–45°) and the wind is light, so the sun will feel pleasant. Sunset is 4:41 PM, and it cools quickly into the 50s, then the upper 40s by late evening."
+        "text": "**Sunny and dry.** It's cold early: upper 30s to mid 40s at 7 AM, so start with a jacket. By mid-afternoon it's in the low to mid 60s with light winds and lots of sun. The sun sets at 4:41 PM, and it's back into the 50s soon after, then the upper 40s by late evening."
       },
       {
-        "title": "Sunday and the game",
-        "text": "Clouds thicken Sunday morning and it stays mild, upper 50s to near 60° at kickoff, with a light east to northeast breeze. During the game, the models put the chance of showers at about 40–45%, and it is more likely late in the game than at kickoff. If the wetter models are right, rain becomes steady Sunday evening and overnight. The wettest models show 1–1.5 inches by Monday morning, while the drier ones show none. The ensembles give about a 40–70% chance of a tenth of an inch or more over the weekend, and 25–55% for half an inch or more. No thunder or snow is expected."
+        "title": "Sunday: game day",
+        "text": "**Cloudy and mild,** near 60° at the 1 PM kickoff with a light breeze. There's about a **40% chance of showers during the game**, more likely in the second half than at kickoff. If the rain comes, it's steadiest Sunday evening and overnight and could be heavy, an inch or more. There's also a real chance the whole day stays dry. No snow or thunder is expected."
       },
       {
         "title": "Monday morning",
-        "text": "Rain should end around daybreak. Behind the front the wind turns northwest at 10–15 mph with gusts of 25–30 mph, and temperatures in the 50s start to fall in the afternoon."
+        "text": "Rain ends around daybreak. Then it turns **windy**, with gusts of 25 to 30 mph. Temperatures in the 50s start to fall in the afternoon."
       },
       {
-        "title": "What to wear",
-        "text": "**Saturday:** a jacket or fleece for the early tailgate, then long sleeves or a sweater in the afternoon sun. Bring sunglasses, because the November sun stays low (30° at its highest) and the glare is strong. **Sunday:** long sleeves with a light jacket, and a **hooded rain jacket or poncho**, since umbrellas don't work well in stadium seating. Wear shoes that can handle puddles. **Monday:** a wind-resistant jacket."
+        "title": "What to bring",
+        "text": "**Saturday:** a jacket or fleece for the early tailgate, long sleeves for the afternoon, and sunglasses, because the low November sun is bright. **Sunday:** long sleeves, a light jacket, and a **hooded rain jacket or poncho**, since umbrellas don't work in the stands. Wear shoes that can handle puddles. **Monday:** a wind-resistant jacket."
       }
     ],
-    "confidence": "**High** for Saturday. **Low** for Sunday afternoon and night: the models still disagree on the coastal low's track. Expect this to firm up by Thursday, and I'll update the briefing as it does."
+    "confidence": "**Saturday: high.** **Sunday afternoon and night: low.** It depends on the path of a storm coming up the coast, and that should be clearer by Thursday. I'll update this briefing as it firms up.",
+    "fans": "High pressure near 1028 mb sits over the Mid-Atlantic on Saturday. A weak low forms off the Southeast coast and drifts north Sunday ahead of a Great Lakes cold front. GFS, AIFS and GEM bring its rain shield into Philadelphia Sunday afternoon into early Monday, with 0.6–1.8 in by Monday morning. The ECMWF IFS and ICON keep it offshore and dry. NBM splits the difference at about 0.4 in.\n\nFor the event, the ensembles give a 39–69% chance of 0.1 in or more and a 25–57% chance of 0.5 in or more. GEFS and ENS sit at the low end and AIFS ENS at the high end. The front crosses early Monday, and the wind turns northwest with gusts of 25–30 mph."
   }
 }

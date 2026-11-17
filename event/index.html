@@ -101,25 +101,25 @@
 
     <nav class="tabs" id="tabs" aria-label="Sections">
       <div class="wrap">
-        <a href="#s-brief">Briefing</a>
-        <a href="#s-timeline">Timeline</a>
+        <a href="#s-brief">Forecast</a>
+        <a href="#s-timeline">Hour by hour</a>
         <a href="#s-wear">What to wear</a>
-        <a href="#s-models">Models</a>
-        <a href="#s-map">Big picture</a>
-        <a href="#s-sun">Sun</a>
+        <a href="#s-sun">Sunrise &amp; sunset</a>
         <a href="#s-typical">Typical</a>
+        <a href="#s-details">For weather fans</a>
       </div>
     </nav>
 
     <div class="wrap sections">
       <section id="s-brief" class="card brief" hidden>
-        <div class="card-head"><h2>Forecaster briefing</h2><span class="meta" id="b-issued"></span></div>
+        <div class="card-head"><h2>The forecast</h2><span class="meta" id="b-issued"></span></div>
         <div id="b-body" class="prose"></div>
       </section>
 
       <section id="s-timeline" class="card">
-        <div class="card-head"><h2>Timeline</h2><span class="meta">Model consensus · tap a block for detail</span></div>
+        <div class="card-head"><h2>Hour by hour</h2><span class="meta">Tap a block for the details</span></div>
         <div class="parts" id="parts"><div class="skel" style="height:180px"></div></div>
+        <label class="switch"><input type="checkbox" id="showmodels"><span></span>Show each forecast model</label>
         <div class="charts">
           <figure class="chart" id="c-temp"><figcaption><b>Temperature</b> <span class="legend" id="l-temp"></span></figcaption><div class="plot"></div></figure>
           <figure class="chart" id="c-pcp"><figcaption><b>Rain and snow</b> <span class="legend" id="l-pcp"></span></figcaption><div class="plot"></div></figure>
@@ -132,30 +132,6 @@
         <div id="wear" class="wear"></div>
       </section>
 
-      <section id="s-models" class="card">
-        <div class="card-head"><h2>Model by model</h2><span class="meta" id="m-meta"></span></div>
-        <div class="confidence" id="confidence"></div>
-        <div class="tablewrap"><table class="mtable" id="mtable"></table></div>
-        <div class="ensemble" id="ensemble"></div>
-      </section>
-
-      <section id="s-map" class="card">
-        <div class="card-head"><h2>The big picture</h2><span class="meta" id="map-meta">GFS pressure, precipitation and rain–snow line</span></div>
-        <div class="mapbox">
-          <canvas id="map" aria-label="Map of sea-level pressure and precipitation around the event"></canvas>
-          <div class="maplegend" id="maplegend"></div>
-          <p class="mapnote" id="mapnote" hidden></p>
-        </div>
-        <div class="mapctl">
-          <button class="iconbtn" id="mplay" type="button" aria-label="Play"><svg viewBox="0 0 20 20" fill="currentColor"><path d="M6 4l10 6-10 6z"/></svg></button>
-          <input type="range" id="mslider" min="0" max="0" value="0" aria-label="Map time">
-          <span class="num" id="mtime"></span>
-        </div>
-        <div class="seg" role="group" aria-label="Map layer">
-          <button type="button" data-layer="sfc" aria-pressed="true">Surface</button>
-          <button type="button" data-layer="upper" aria-pressed="false">500 mb</button>
-        </div>
-      </section>
 
       <section id="s-sun" class="card">
         <div class="card-head"><h2>Sun and light</h2><span class="meta">Sunrise, sunset, golden hour and how high the sun gets</span></div>
@@ -166,6 +142,36 @@
         <div class="card-head"><h2>Typical for these dates</h2><span class="meta" id="t-meta"></span></div>
         <div id="typical"></div>
       </section>
+
+      <details class="card nerd" id="s-details">
+        <summary><span><h2>For weather fans</h2><span class="meta">Every model side by side, the ensembles and the big-picture weather map</span></span><svg class="chev" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 8l5 5 5-5"/></svg></summary>
+        <div class="nerd-body">
+        <div id="s-models" class="sub">
+          <div class="card-head"><h2>Model by model</h2><span class="meta" id="m-meta"></span></div>
+          <div class="confidence" id="confidence"></div>
+          <div class="tablewrap"><table class="mtable" id="mtable"></table></div>
+          <div class="ensemble" id="ensemble"></div>
+        </div>
+
+        <div id="s-map" class="sub">
+          <div class="card-head"><h2>The big picture</h2><span class="meta" id="map-meta">GFS pressure, precipitation and rain–snow line</span></div>
+          <div class="mapbox">
+            <canvas id="map" aria-label="Map of sea-level pressure and precipitation around the event"></canvas>
+            <div class="maplegend" id="maplegend"></div>
+            <p class="mapnote" id="mapnote" hidden></p>
+          </div>
+          <div class="mapctl">
+            <button class="iconbtn" id="mplay" type="button" aria-label="Play"><svg viewBox="0 0 20 20" fill="currentColor"><path d="M6 4l10 6-10 6z"/></svg></button>
+            <input type="range" id="mslider" min="0" max="0" value="0" aria-label="Map time">
+            <span class="num" id="mtime"></span>
+          </div>
+          <div class="seg" role="group" aria-label="Map layer">
+            <button type="button" data-layer="sfc" aria-pressed="true">Surface</button>
+            <button type="button" data-layer="upper" aria-pressed="false">500 mb</button>
+          </div>
+        </div>
+        </div>
+      </details>
     </div>
   </article>
 
