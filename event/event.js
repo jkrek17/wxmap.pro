@@ -586,14 +586,21 @@
     };
     var meta = function () {
       var d = docs[cur], c = d.cycle ? d.cycle.slice(5, 10).replace('-', '/') + ' ' + d.cycle.slice(11) : '';
-      $('#map-meta').textContent = cur === 'blend'
+      $('#map-meta').textContent = cur === 'blend' && !d.legacy
         ? 'Most likely rain and snow from ' + d.members + ' forecast runs · each frame is the 6 hours ending at the time shown'
         : d.name + ' run of ' + c + ' · each frame is the 6 hours ending at the time shown';
-      $('#maplegend').innerHTML = Synoptic.legend(layer, cur === 'blend');
+      $('#maplegend').innerHTML = Synoptic.legend(layer, cur === 'blend' && !d.legacy);
     };
     var get = function (id) {
       if (docs[id]) return Promise.resolve(docs[id]);
-      return getJSON(DATA + ev.slug + '/synoptic' + (id === 'blend' ? '' : '-' + id) + '.json', 1).then(function (d) { docs[id] = d; return d; });
+      return getJSON(DATA + ev.slug + '/synoptic' + (id === 'blend' ? '' : '-' + id) + '.json', 1).then(function (d) {
+        if (!d.frames && d.fields) {   // the first, GFS-only format, until the VPS job rebuilds it
+          d.frames = d.times.map(function (t, i) { var f = {}; Object.keys(d.fields).forEach(function (k) { f[k] = d.fields[k][i]; }); return f; });
+          d.times = d.times.map(function (t) { return t.valid; });
+          d.name = 'GFS'; d.models = [{ id: 'blend', name: 'GFS' }]; d.legacy = true;
+        }
+        docs[id] = d; return d;
+      });
     };
     var show = function (id) {
       var keep = docs[cur] ? docs[cur].times[+sl.value] : null;
