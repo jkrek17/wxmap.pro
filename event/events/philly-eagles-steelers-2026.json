@@ -1,0 +1,46 @@
+{
+  "slug": "philly-eagles-steelers-2026",
+  "title": "Eagles vs. Steelers weekend",
+  "place": "Lincoln Financial Field, Philadelphia",
+  "lat": 39.9008,
+  "lon": -75.1675,
+  "tz": "America/New_York",
+  "start": "2026-11-21T07:00",
+  "end": "2026-11-23T12:00",
+  "kind": "stadium",
+  "highlight": [
+    {
+      "label": "Game, 1 PM kickoff",
+      "start": "2026-11-22T13:00",
+      "end": "2026-11-22T16:30"
+    }
+  ],
+  "briefing": {
+    "issued": "2026-11-17T09:45",
+    "tzabbr": "EST",
+    "headline": "A dry, sunny Saturday, then a coastal low brings a real chance of rain from Sunday afternoon into early Monday. The game itself (1 PM) looks mild, near 60°, with about a 40% chance of showers that grows late in the game.",
+    "sections": [
+      {
+        "title": "The big picture",
+        "text": "High pressure (about 1028 mb) sits right over the Mid-Atlantic on Saturday. Meanwhile a weak low forms off the Southeast coast and drifts north on Sunday, while a cold front comes in from the Great Lakes. Where that coastal low goes decides Sunday. **GFS, the ECMWF AI model (AIFS) and the Canadian model bring its rain into Philadelphia from Sunday afternoon to early Monday.** The ECMWF and German models keep it offshore and dry. The front sweeps through early Monday, and behind it the wind turns northwest and picks up."
+      },
+      {
+        "title": "Saturday",
+        "text": "**Dry, with lots of sun.** It is cold at 7 AM (upper 30s to mid 40s) and warms to the low to mid 60s by mid-afternoon. The air is fairly dry (dew points 35–45°) and the wind is light, so the sun will feel pleasant. Sunset is 4:41 PM, and it cools quickly into the 50s, then the upper 40s by late evening."
+      },
+      {
+        "title": "Sunday and the game",
+        "text": "Clouds thicken Sunday morning and it stays mild, upper 50s to near 60° at kickoff, with a light east to northeast breeze. During the game, the models put the chance of showers at about 40–45%, and it is more likely late in the game than at kickoff. If the wetter models are right, rain becomes steady Sunday evening and overnight. The wettest models show 1–1.5 inches by Monday morning, while the drier ones show none. The ensembles give about a 40–70% chance of a tenth of an inch or more over the weekend, and 25–55% for half an inch or more. No thunder or snow is expected."
+      },
+      {
+        "title": "Monday morning",
+        "text": "Rain should end around daybreak. Behind the front the wind turns northwest at 10–15 mph with gusts of 25–30 mph, and temperatures in the 50s start to fall in the afternoon."
+      },
+      {
+        "title": "What to wear",
+        "text": "**Saturday:** a jacket or fleece for the early tailgate, then long sleeves or a sweater in the afternoon sun. Bring sunglasses, because the November sun stays low (30° at its highest) and the glare is strong. **Sunday:** long sleeves with a light jacket, and a **hooded rain jacket or poncho**, since umbrellas don't work well in stadium seating. Wear shoes that can handle puddles. **Monday:** a wind-resistant jacket."
+      }
+    ],
+    "confidence": "**High** for Saturday. **Low** for Sunday afternoon and night: the models still disagree on the coastal low's track. Expect this to firm up by Thursday, and I'll update the briefing as it does."
+  }
+}

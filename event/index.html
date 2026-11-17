@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Event Forecast · wxmap.pro</title>
+<meta name="description" content="A weather briefing for your event: every major forecast model and ensemble for the place and hours you care about, sunrise and sunset, the big picture, and what to wear.">
+<meta name="theme-color" content="#f4f6f8" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#08121d" media="(prefers-color-scheme: dark)">
+<!-- Saved events live in events/<slug>.json; the GFS maps for them in data/<slug>/synoptic.json
+     (written on the VPS by tools/event_build.py). Point forecasts come from Open-Meteo in the browser. -->
+<meta name="event-data" content="data/">
+<link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://api.open-meteo.com" crossorigin>
+<link rel="preconnect" href="https://ensemble-api.open-meteo.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../assets/tokens.css">
+<link rel="stylesheet" href="../assets/house.css">
+<link rel="stylesheet" href="../assets/theme.css">
+<link rel="stylesheet" href="event.css">
+<script src="../assets/theme.js"></script>
+</head>
+<body>
+
+<header class="appbar">
+  <div class="wrap">
+    <a class="brand" href="../" aria-label="wxmap.pro home">
+      <svg viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="14" fill="none" stroke="currentColor" stroke-width="1.6" opacity=".35"/><circle cx="16" cy="16" r="9" fill="none" stroke="currentColor" stroke-width="1.6" opacity=".6"/><circle cx="16" cy="16" r="4" fill="var(--accent)"/></svg>
+      <span>wxmap<span class="tld">.pro</span></span>
+      <span class="appname">Event</span>
+    </a>
+    <nav aria-label="Site">
+      <a href="./" class="newbtn" id="newbtn" hidden>New event</a>
+      <div class="theme" role="group" aria-label="Colour theme">
+        <button type="button" data-theme-set="system" aria-label="Use system theme" title="System"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="12" height="8" rx="1.5"/><path d="M6 14h4"/></svg></button>
+        <button type="button" data-theme-set="light" aria-label="Use light theme" title="Light"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="3"/><path d="M8 1.5v1.5M8 13v1.5M1.5 8H3M13 8h1.5M3.4 3.4l1 1M11.6 11.6l1 1M3.4 12.6l1-1M11.6 4.4l1-1"/></svg></button>
+        <button type="button" data-theme-set="dark" aria-label="Use dark theme" title="Dark"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M13 9.5A5.5 5.5 0 0 1 6.5 3a5.5 5.5 0 1 0 6.5 6.5z"/></svg></button>
+      </div>
+    </nav>
+  </div>
+</header>
+
+<main id="app">
+  <!-- Planner: shown when no event is chosen -->
+  <section class="planner wrap" id="planner" hidden>
+    <div class="planner-hero">
+      <p class="eyebrow">Event forecast</p>
+      <h1>Weather for the hours that matter.</h1>
+      <p class="lede">Pick a place and a time. Every major model and ensemble, the big picture, sunrise and sunset, and what to wear, in one briefing.</p>
+    </div>
+    <form class="card planform" id="planform" autocomplete="off">
+      <label class="field">
+        <span>Where</span>
+        <div class="search">
+          <input id="place" type="text" placeholder="City, venue town or ZIP" required aria-autocomplete="list" aria-controls="placelist">
+          <ul id="placelist" class="suggest" role="listbox" hidden></ul>
+        </div>
+      </label>
+      <label class="field"><span>Event name <em>(optional)</em></span><input id="ename" type="text" placeholder="Our wedding"></label>
+      <div class="row2">
+        <label class="field"><span>Starts</span><input id="estart" type="datetime-local" required></label>
+        <label class="field"><span>Ends</span><input id="eend" type="datetime-local" required></label>
+      </div>
+      <fieldset class="field kinds">
+        <legend>Setting</legend>
+        <label><input type="radio" name="kind" value="outdoor" checked><span>Outdoors</span></label>
+        <label><input type="radio" name="kind" value="stadium"><span>Stadium</span></label>
+        <label><input type="radio" name="kind" value="wedding"><span>Wedding</span></label>
+        <label><input type="radio" name="kind" value="travel"><span>Travel</span></label>
+      </fieldset>
+      <button class="btn btn-primary btn-wide" type="submit">Build the briefing</button>
+      <p class="hint" id="planhint">Up to 16 days ahead uses the models; further out shows what is typical for the date.</p>
+    </form>
+    <div class="saved" id="saved" hidden>
+      <h2 class="eyebrow">Briefings</h2>
+      <div class="saved-list" id="savedlist"></div>
+    </div>
+  </section>
+
+  <!-- Briefing -->
+  <article class="briefing" id="briefing" hidden>
+    <section class="hero">
+      <div class="wrap">
+        <div class="hero-top">
+          <div>
+            <p class="eyebrow" id="h-when"></p>
+            <h1 id="h-title"></h1>
+            <p class="place" id="h-place"></p>
+          </div>
+          <div class="hero-actions">
+            <button class="iconbtn" id="share" type="button" aria-label="Share this briefing" title="Share"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M10 3v10M6 7l4-4 4 4M4 12v4h12v-4"/></svg></button>
+            <button class="iconbtn" id="print" type="button" aria-label="Print or save as PDF" title="Print / PDF"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M5 8V3h10v5M5 14H3V8h14v6h-2M6 12h8v5H6z"/></svg></button>
+          </div>
+        </div>
+        <div class="glance" id="glance"><div class="skel" style="height:120px"></div></div>
+        <div class="chips" id="h-chips"></div>
+      </div>
+    </section>
+
+    <nav class="tabs" id="tabs" aria-label="Sections">
+      <div class="wrap">
+        <a href="#s-brief">Briefing</a>
+        <a href="#s-timeline">Timeline</a>
+        <a href="#s-wear">What to wear</a>
+        <a href="#s-models">Models</a>
+        <a href="#s-map">Big picture</a>
+        <a href="#s-sun">Sun</a>
+        <a href="#s-typical">Typical</a>
+      </div>
+    </nav>
+
+    <div class="wrap sections">
+      <section id="s-brief" class="card brief" hidden>
+        <div class="card-head"><h2>Forecaster briefing</h2><span class="meta" id="b-issued"></span></div>
+        <div id="b-body" class="prose"></div>
+      </section>
+
+      <section id="s-timeline" class="card">
+        <div class="card-head"><h2>Timeline</h2><span class="meta">Model consensus · tap a block for detail</span></div>
+        <div class="parts" id="parts"><div class="skel" style="height:180px"></div></div>
+        <div class="charts">
+          <figure class="chart" id="c-temp"><figcaption><b>Temperature</b> <span class="legend" id="l-temp"></span></figcaption><div class="plot"></div></figure>
+          <figure class="chart" id="c-pcp"><figcaption><b>Rain and snow</b> <span class="legend" id="l-pcp"></span></figcaption><div class="plot"></div></figure>
+          <figure class="chart" id="c-wind"><figcaption><b>Wind and gusts</b> <span class="legend" id="l-wind"></span></figcaption><div class="plot"></div></figure>
+        </div>
+      </section>
+
+      <section id="s-wear" class="card">
+        <div class="card-head"><h2>What to wear</h2><span class="meta">From how it will feel: sun angle, dew point, wind and rain</span></div>
+        <div id="wear" class="wear"></div>
+      </section>
+
+      <section id="s-models" class="card">
+        <div class="card-head"><h2>Model by model</h2><span class="meta" id="m-meta"></span></div>
+        <div class="confidence" id="confidence"></div>
+        <div class="tablewrap"><table class="mtable" id="mtable"></table></div>
+        <div class="ensemble" id="ensemble"></div>
+      </section>
+
+      <section id="s-map" class="card">
+        <div class="card-head"><h2>The big picture</h2><span class="meta" id="map-meta">GFS pressure, precipitation and rain–snow line</span></div>
+        <div class="mapbox">
+          <canvas id="map" aria-label="Map of sea-level pressure and precipitation around the event"></canvas>
+          <div class="maplegend" id="maplegend"></div>
+          <p class="mapnote" id="mapnote" hidden></p>
+        </div>
+        <div class="mapctl">
+          <button class="iconbtn" id="mplay" type="button" aria-label="Play"><svg viewBox="0 0 20 20" fill="currentColor"><path d="M6 4l10 6-10 6z"/></svg></button>
+          <input type="range" id="mslider" min="0" max="0" value="0" aria-label="Map time">
+          <span class="num" id="mtime"></span>
+        </div>
+        <div class="seg" role="group" aria-label="Map layer">
+          <button type="button" data-layer="sfc" aria-pressed="true">Surface</button>
+          <button type="button" data-layer="upper" aria-pressed="false">500 mb</button>
+        </div>
+      </section>
+
+      <section id="s-sun" class="card">
+        <div class="card-head"><h2>Sun and light</h2><span class="meta">Sunrise, sunset, golden hour and how high the sun gets</span></div>
+        <div class="sun" id="sun"></div>
+      </section>
+
+      <section class="card typical" id="s-typical" hidden>
+        <div class="card-head"><h2>Typical for these dates</h2><span class="meta" id="t-meta"></span></div>
+        <div id="typical"></div>
+      </section>
+    </div>
+  </article>
+
+  <p class="status wrap" id="status" hidden></p>
+</main>
+
+<footer class="sitefoot">
+  <div class="wrap">
+    <span>Point forecasts: <a href="https://open-meteo.com/">Open-Meteo</a> (CC BY 4.0) from NOAA GFS, GEFS, NBM, HRRR; ECMWF IFS, ENS, AIFS; DWD ICON; ECCC GEM. Maps: NOAA GFS via AWS Open Data.</span>
+    <span>Not an official forecast. <a href="../">wxmap.pro</a></span>
+  </div>
+</footer>
+
+<div class="sheet" id="sheet" hidden>
+  <div class="sheet-card" role="dialog" aria-modal="true" aria-labelledby="sheet-title">
+    <div class="sheet-grip"></div>
+    <div class="sheet-head"><h3 id="sheet-title"></h3><button class="iconbtn" id="sheet-close" type="button" aria-label="Close"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 5l10 10M15 5L5 15"/></svg></button></div>
+    <div id="sheet-body"></div>
+  </div>
+</div>
+<div class="toast" id="toast" hidden></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/3.0.2/topojson.min.js"></script>
+<script src="wear.js"></script>
+<script src="icons.js"></script>
+<script src="synoptic.js"></script>
+<script src="event.js"></script>
+</body>
+</html>
