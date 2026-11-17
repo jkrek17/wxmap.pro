@@ -102,6 +102,7 @@
     <nav class="tabs" id="tabs" aria-label="Sections">
       <div class="wrap">
         <a href="#s-brief">Forecast</a>
+        <a href="#s-map">Rain map</a>
         <a href="#s-timeline">Hour by hour</a>
         <a href="#s-wear">What to wear</a>
         <a href="#s-sun">Sunrise &amp; sunset</a>
@@ -114,6 +115,25 @@
       <section id="s-brief" class="card brief" hidden>
         <div class="card-head"><h2>The forecast</h2><span class="meta" id="b-issued"></span></div>
         <div id="b-body" class="prose"></div>
+      </section>
+
+      <section id="s-map" class="card">
+        <div class="card-head"><h2>Rain and snow map</h2><span class="meta" id="map-meta"></span></div>
+        <div class="seg mtabs" id="mtabs" role="tablist" aria-label="Forecast"></div>
+        <div class="mapbox">
+          <canvas id="map" aria-label="Map of sea-level pressure and precipitation around the event"></canvas>
+          <div class="maplegend" id="maplegend"></div>
+          <p class="mapnote" id="mapnote" hidden></p>
+        </div>
+        <div class="mapctl">
+          <button class="iconbtn" id="mplay" type="button" aria-label="Play"><svg viewBox="0 0 20 20" fill="currentColor"><path d="M6 4l10 6-10 6z"/></svg></button>
+          <input type="range" id="mslider" min="0" max="0" value="0" aria-label="Map time">
+          <span class="num" id="mtime"></span>
+        </div>
+        <div class="seg" role="group" aria-label="Map layer">
+          <button type="button" data-layer="sfc" aria-pressed="true">Rain &amp; snow</button>
+          <button type="button" data-layer="upper" aria-pressed="false">Upper air</button>
+        </div>
       </section>
 
       <section id="s-timeline" class="card">
@@ -144,7 +164,7 @@
       </section>
 
       <details class="card nerd" id="s-details">
-        <summary><span><h2>For weather fans</h2><span class="meta">Every model side by side, the ensembles and the big-picture weather map</span></span><svg class="chev" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 8l5 5 5-5"/></svg></summary>
+        <summary><span><h2>For weather fans</h2><span class="meta">Every model side by side and the ensembles</span></span><svg class="chev" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 8l5 5 5-5"/></svg></summary>
         <div class="nerd-body">
         <div id="s-models" class="sub">
           <div class="card-head"><h2>Model by model</h2><span class="meta" id="m-meta"></span></div>
@@ -153,23 +173,6 @@
           <div class="ensemble" id="ensemble"></div>
         </div>
 
-        <div id="s-map" class="sub">
-          <div class="card-head"><h2>The big picture</h2><span class="meta" id="map-meta">GFS pressure, precipitation and rain–snow line</span></div>
-          <div class="mapbox">
-            <canvas id="map" aria-label="Map of sea-level pressure and precipitation around the event"></canvas>
-            <div class="maplegend" id="maplegend"></div>
-            <p class="mapnote" id="mapnote" hidden></p>
-          </div>
-          <div class="mapctl">
-            <button class="iconbtn" id="mplay" type="button" aria-label="Play"><svg viewBox="0 0 20 20" fill="currentColor"><path d="M6 4l10 6-10 6z"/></svg></button>
-            <input type="range" id="mslider" min="0" max="0" value="0" aria-label="Map time">
-            <span class="num" id="mtime"></span>
-          </div>
-          <div class="seg" role="group" aria-label="Map layer">
-            <button type="button" data-layer="sfc" aria-pressed="true">Surface</button>
-            <button type="button" data-layer="upper" aria-pressed="false">500 mb</button>
-          </div>
-        </div>
         </div>
       </details>
     </div>
@@ -180,7 +183,7 @@
 
 <footer class="sitefoot">
   <div class="wrap">
-    <span>Point forecasts: <a href="https://open-meteo.com/">Open-Meteo</a> (CC BY 4.0) from NOAA GFS, GEFS, NBM, HRRR; ECMWF IFS, ENS, AIFS; DWD ICON; ECCC GEM. Maps: NOAA GFS via AWS Open Data.</span>
+    <span>Point forecasts: <a href="https://open-meteo.com/">Open-Meteo</a> (CC BY 4.0) from NOAA GFS, GEFS, NBM, HRRR; ECMWF IFS, ENS, AIFS; DWD ICON; ECCC GEM. Maps: NOAA GFS and GEFS, ECMWF IFS, ENS, AIFS and AIFS ENS via AWS Open Data.</span>
     <span>Not an official forecast. <a href="../">wxmap.pro</a></span>
   </div>
 </footer>

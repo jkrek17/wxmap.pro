@@ -23,22 +23,24 @@
     this.geo = null; this.doc = null;
   }
 
+  // doc: one synoptic*.json (frames of msl, z500, thk, pcp, ptype and, for the blend, chance)
+  Synoptic.prototype.setDoc = function (doc) {
+    var d = doc;
+    this.doc = d;
+    this.flat = {};
+    var self = this;
+    ['msl', 'z500', 'thk', 'pcp', 'ptype', 'chance'].forEach(function (k) {
+      self.flat[k] = d.frames.map(function (fr) { return fr[k] ? [].concat.apply([], fr[k]) : null; });
+    });
+    if (this.i >= d.frames.length) this.i = d.frames.length - 1;
+    if (this.geo) this.resize();
+  };
+
   Synoptic.prototype.load = function (doc) {
     var self = this;
-    this.doc = doc;
-    var d = doc, f = d.fields;
-    this.lats = d3.range(d.ny).map(function (j) { return d.lat0 - j * d.step; });
-    this.lons = d3.range(d.nx).map(function (i) { return d.lon0 + i * d.step; });
-    // flatten each field once
-    this.flat = {};
-    Object.keys(f).forEach(function (k) {
-      self.flat[k] = f[k].map(function (g) { return g ? [].concat.apply([], g) : null; });
-    });
     var latC = this.o.lat, lonC = this.o.lon;
     this.proj = d3.geoConicConformal().parallels([latC - 8, latC + 8]).rotate([-lonC, 0]).center([0, latC]);
-    var bbox = { type: 'Polygon', coordinates: [[
-      [d.lon0, this.lats[d.ny - 1]], [this.lons[d.nx - 1], this.lats[d.ny - 1]], [this.lons[d.nx - 1], d.lat0], [d.lon0, d.lat0], [d.lon0, this.lats[d.ny - 1]]]] };
-    this.bbox = bbox;
+    this.setDoc(doc);
     return Promise.all([fetch(ATLAS.world).then(function (r) { return r.json(); }), fetch(ATLAS.states).then(function (r) { return r.json(); }).catch(function () { return null; })])
       .then(function (a) {
         self.geo = {
@@ -63,6 +65,16 @@
       [this.o.lon - 14, this.o.lat - 9], [this.o.lon + 14, this.o.lat + 9], [this.o.lon - 14, this.o.lat + 9], [this.o.lon + 14, this.o.lat - 9]] };
     if (w < 600) inner.coordinates = [[this.o.lon - 9, this.o.lat - 9], [this.o.lon + 9, this.o.lat + 9], [this.o.lon - 9, this.o.lat + 9], [this.o.lon + 9, this.o.lat - 9]];
     this.proj.fitExtent([[0, 0], [w, h]], inner);
+    // grid position of every screen pixel, for the precipitation raster
+    var d = this.doc, n = w * h, gx = new Float32Array(n), gy = new Float32Array(n);
+    for (var py = 0; py < h; py++) for (var px = 0; px < w; px++) {
+      var ll = this.proj.invert([px + 0.5, py + 0.5]), k = py * w + px;
+      if (!ll) { gx[k] = -1; continue; }
+      var dl = ((ll[0] - d.lon0) % 360 + 360) % 360;
+      gx[k] = dl / d.step; gy[k] = (d.lat0 - ll[1]) / d.step;
+    }
+    this.gx = gx; this.gy = gy;
+    this.off = document.createElement('canvas'); this.off.width = w; this.off.height = h;
     this.draw();
   };
 
@@ -102,6 +114,32 @@
     ctx.stroke();
   };
 
+  // 6 h precipitation as a smooth raster: colour by amount and type; on the blend, fainter where
+  // fewer of the forecasts have it (alpha from the chance of 0.01 in or more)
+  var RGB = {};
+  Object.keys(PCP_COL).forEach(function (t) { RGB[t] = PCP_COL[t].map(function (c) { return [parseInt(c.slice(1, 3), 16), parseInt(c.slice(3, 5), 16), parseInt(c.slice(5, 7), 16)]; }); });
+  Synoptic.prototype.rasterPcp = function (i) {
+    var d = this.doc, nx = d.nx, ny = d.ny, w = this.w, h = this.h;
+    var pcp = this.flat.pcp[i], pt = this.flat.ptype[i], ch = this.flat.chance[i];
+    var octx = this.off.getContext('2d'), img = octx.createImageData(w, h), px = img.data;
+    var gx = this.gx, gy = this.gy;
+    for (var k = 0; k < w * h; k++) {
+      var x = gx[k], y = gy[k];
+      if (x < 0 || y < 0 || x > nx - 1 || y > ny - 1) continue;
+      var x0 = x | 0, y0 = y | 0, x1 = Math.min(x0 + 1, nx - 1), y1 = Math.min(y0 + 1, ny - 1), fx = x - x0, fy = y - y0;
+      var a = y0 * nx + x0, b = y0 * nx + x1, c = y1 * nx + x0, e = y1 * nx + x1;
+      var v = ((pcp[a] * (1 - fx) + pcp[b] * fx) * (1 - fy) + (pcp[c] * (1 - fx) + pcp[e] * fx) * fy) / 10;
+      if (v < PCP_LEVELS[0]) continue;
+      var lv = 0; while (lv < PCP_LEVELS.length - 1 && v >= PCP_LEVELS[lv + 1]) lv++;
+      var t = pt[Math.round(y) * nx + Math.round(x)] || 0, col = RGB[t][lv];
+      var al = 0.8;
+      if (ch) { var cv = (ch[a] * (1 - fx) + ch[b] * fx) * (1 - fy) + (ch[c] * (1 - fx) + ch[e] * fx) * fy; al = 0.18 + 0.72 * Math.min(1, cv / 90); }
+      var o = k * 4; px[o] = col[0]; px[o + 1] = col[1]; px[o + 2] = col[2]; px[o + 3] = Math.round(al * 255);
+    }
+    octx.putImageData(img, 0, 0);
+    this.ctx.drawImage(this.off, 0, 0, w, h);
+  };
+
   Synoptic.prototype.draw = function () {
     if (!this.doc || !this.geo) return;
     var ctx = this.ctx, d = this.doc, i = this.i, self = this;
@@ -113,20 +151,7 @@
     ctx.fillStyle = dark ? '#16273a' : '#fbfaf6'; ctx.beginPath(); path(this.geo.land); ctx.fill();
 
     var C = d3.contours().size([d.nx, d.ny]).smooth(true);
-    if (this.layer === 'sfc') {
-      var pcp = this.flat.pcp[i], pt = this.flat.ptype[i];
-      if (pcp) {
-        [0, 1, 2].forEach(function (type) {
-          var v = pcp.map(function (x, k) { return pt[k] === type ? x / 10 : 0; });
-          ctx.globalAlpha = 0.78;
-          C.thresholds(PCP_LEVELS)(v).forEach(function (band, b) {
-            if (!band.coordinates.length) return;
-            ctx.fillStyle = PCP_COL[type][b]; self.fillMulti(band);
-          });
-          ctx.globalAlpha = 1;
-        });
-      }
-    }
+    if (this.layer === 'sfc' && this.flat.pcp[i]) this.rasterPcp(i);
     // coast, borders, states
     ctx.lineWidth = 0.8; ctx.strokeStyle = dark ? '#5d7590' : '#8a9aab';
     ctx.beginPath(); path(this.geo.land); ctx.stroke();
@@ -138,7 +163,6 @@
       // thickness 540 dam: the classic rain-snow line
       var thk = this.flat.thk[i];
       ctx.setLineDash([6, 4]); ctx.lineWidth = 1.6;
-      ctx.strokeStyle = '#d33d6a'; this.strokeMulti(d3.contours().size([d.nx, d.ny]).smooth(true).thresholds([546])(thk)[0]);
       ctx.strokeStyle = '#3b6fd8'; this.strokeMulti(d3.contours().size([d.nx, d.ny]).smooth(true).thresholds([540])(thk)[0]);
       ctx.setLineDash([]);
       // isobars every 4 mb
@@ -218,11 +242,12 @@
   Synoptic.prototype.set = function (i) { this.i = i; this.draw(); };
   Synoptic.prototype.setLayer = function (l) { this.layer = l; this.draw(); };
 
-  Synoptic.legend = function (layer) {
-    if (layer === 'upper') return '<span><i class="ln"></i>500 mb height (dam, every 6)</span>';
+  Synoptic.legend = function (layer, blend) {
+    if (layer === 'upper') return '<span><i class="ln"></i>500 mb height (dam, every 6)</span><span>Lows and troughs steer the weather</span>';
     function ramp(t) { return PCP_COL[t].map(function (c) { return '<i style="background:' + c + '"></i>'; }).join(''); }
-    return '<span class="ramp">' + ramp(0) + ' Rain</span><span class="ramp">' + ramp(1) + ' Snow</span><span class="ramp">' + ramp(2) + ' Ice/mix</span>' +
-      '<span><i class="ln"></i>Isobars, 4 mb</span><span><i class="ln dash blue"></i>540 thickness (snow side)</span><span><i class="ln dash red"></i>546</span>';
+    return '<span class="ramp">' + ramp(0) + ' Rain</span><span class="ramp">' + ramp(1) + ' Snow</span><span class="ramp">' + ramp(2) + ' Mix</span>' +
+      '<span>Light → heavy, 6 hours</span>' + (blend ? '<span class="fade"><i></i>Fainter = fewer forecasts agree</span>' : '') +
+      '<span><i class="ln"></i>Pressure (L = storm)</span><span><i class="ln dash blue"></i>Snow line</span>';
   };
 
   root.Synoptic = Synoptic;
