@@ -305,3 +305,29 @@ body.sheet-open { overflow: hidden; }
   .hero { background: none; }
   .parts { flex-wrap: wrap; overflow: visible; }
 }
+
+/* plain by default: model detail behind a switch and the "for weather fans" panel */
+.switch { display: inline-flex; align-items: center; gap: 10px; margin-top: 14px; font-size: .875rem; color: var(--text-2); cursor: pointer; user-select: none; }
+.switch input { position: absolute; opacity: 0; pointer-events: none; }
+.switch span { width: 38px; height: 22px; border-radius: 999px; background: var(--border-strong); position: relative; transition: background .15s; flex: none; }
+.switch span::after { content: ""; position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 50%; background: var(--surface); box-shadow: 0 1px 2px rgba(0,0,0,.2); transition: transform .15s; }
+.switch input:checked + span { background: var(--accent); }
+.switch input:checked + span::after { transform: translateX(16px); }
+.switch input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: 2px; }
+.chip.conf.high { color: var(--ok); border-color: color-mix(in srgb, var(--ok) 40%, transparent); }
+.chip.conf.medium { color: var(--warn); border-color: color-mix(in srgb, var(--warn) 40%, transparent); }
+.chip.conf.low { color: var(--err); border-color: color-mix(in srgb, var(--err) 40%, transparent); }
+.nerd > summary { list-style: none; cursor: pointer; display: flex; align-items: center; gap: 12px; justify-content: space-between; }
+.nerd > summary::-webkit-details-marker { display: none; }
+.nerd > summary > span { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; }
+.nerd > summary h2 { font-size: 1.375rem; }
+.nerd > summary .meta { font-size: .8125rem; color: var(--text-3); }
+.nerd .chev { width: 22px; height: 22px; color: var(--text-3); transition: transform .15s; flex: none; }
+.nerd[open] .chev { transform: rotate(180deg); }
+.nerd-body { display: grid; gap: 28px; margin-top: 18px; }
+.nerd-body .sub { min-width: 0; }
+.nerd-body .card-head h2 { font-size: 1.125rem; }
+.fans { border-top: 1px solid var(--border); padding-top: 10px; }
+.fans summary { cursor: pointer; color: var(--accent); font-size: .9375rem; }
+.fans p { margin-top: 10px; }
+@media print { .nerd-body { display: grid !important; } }

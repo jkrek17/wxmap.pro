@@ -267,7 +267,7 @@
 
     if (f.beyond) {
       $('#glance').innerHTML = '<div class="glance-far"><b>Too far out for the models.</b> Forecast models reach about 16 days. Below is what is typical for these dates; check back within two weeks of the event.</div>';
-      ['#s-timeline', '#s-wear', '#s-models', '#s-map'].forEach(function (s) { $(s).hidden = true; });
+      ['#s-timeline', '#s-wear', '#s-details'].forEach(function (s) { $(s).hidden = true; });
       syncTabs();
       chips(ev, f, null);
       return;
@@ -277,6 +277,7 @@
     var H = consensus(U, ev);
     var parts = dayParts(H, ev);
     renderGlance(ev, H, parts, U);
+    U.conf = confidence(U);
     chips(ev, f, U);
     renderParts(ev, parts);
     renderCharts(ev, H, U);
@@ -290,10 +291,9 @@
     var lead = (D(ev.start) - D(f.today)) / 86400000, c = [];
     if (lead > 0) c.push('<span class="chip">' + (lead < 1 ? 'Today' : 'In ' + Math.round(lead) + ' day' + (Math.round(lead) === 1 ? '' : 's')) + '</span>');
     else if (D(ev.end) > D(f.today)) c.push('<span class="chip live">Happening now</span>');
-    var tier = lead <= 2 ? 'High-resolution range' : lead <= 7 ? 'Models + ensembles' : lead <= 16 ? 'Ensembles lead' : 'Climatology';
-    c.push('<span class="chip">' + tier + '</span>');
+    if (U && U.conf) c.push('<span class="chip conf ' + U.conf.level.toLowerCase() + '" title="' + esc(U.conf.plain) + '">' + U.conf.level + ' confidence</span>');
+    else if (!U) c.push('<span class="chip">Typical weather only</span>');
     if (ev.kind && KIND_WORD[ev.kind]) c.push('<span class="chip">' + KIND_WORD[ev.kind] + '</span>');
-    if (U) c.push('<span class="chip quiet">' + Object.keys(U.M).length + ' models · ' + Object.keys(U.E).reduce(function (s, k) { return s + U.E[k].temperature_2m.length; }, 0) + ' ensemble members</span>');
     $('#h-chips').innerHTML = c.join('');
   }
 
@@ -309,7 +309,8 @@
     if (b.headline) h += '<p class="headline">' + md(b.headline) + '</p>';
     (b.paragraphs || []).forEach(function (p) { h += '<p>' + md(p) + '</p>'; });
     (b.sections || []).forEach(function (s) { h += '<h3>' + esc(s.title) + '</h3>' + s.text.split('\n\n').map(function (p) { return '<p>' + md(p) + '</p>'; }).join(''); });
-    if (b.confidence) h += '<p class="conf"><b>Confidence:</b> ' + md(b.confidence) + '</p>';
+    if (b.confidence) h += '<p class="conf"><b>How sure are we?</b> ' + md(b.confidence) + '</p>';
+    if (b.fans) h += '<details class="fans"><summary>For weather fans: what the models show</summary>' + b.fans.split('\n\n').map(function (p) { return '<p>' + md(p) + '</p>'; }).join('') + '</details>';
     $('#b-body').innerHTML = h;
   }
 
@@ -391,31 +392,41 @@
   // ---------- charts (SVG, shared crosshair) ----------
   var charts = [];
   function renderCharts(ev, H, U) {
+    var full = $('#showmodels').checked;
     var hs = H.filter(function (h) { return h.s >= addH(ev.start, -3) && h.s <= addH(ev.end, 3); });
     var ids = Object.keys(U.M), mods = MODELS.filter(function (m) { return U.M[m.id]; });
     var idx = hs.map(function (h) { return h.i; });
-    var lines = function (v) { return mods.map(function (m) { return { type: 'line', label: m.name, col: m.col, w: 1.2, op: 0.75, v: idx.map(function (i) { return U.M[m.id][v][i]; }) }; }); };
-    var cum = function (m) { var c = 0; return idx.map(function (i) { c += U.M[m.id].precipitation[i] || 0; return c; }); };
+    var lines = function (v) { return full ? mods.map(function (m) { return { type: 'line', label: m.name, col: m.col, w: 1.2, op: 0.75, v: idx.map(function (i) { return U.M[m.id][v][i]; }) }; }) : []; };
+    var cum = function (get) { var c = 0; return idx.map(function (i, k) { c += get(i, k) || 0; return c; }); };
+    var cumM = function (m) { return cum(function (i) { return U.M[m.id].precipitation[i]; }); };
+    var expected = cum(function (i, k) { return hs[k].rain; });
     charts = [];
     charts.push(chart('#c-temp', ev, hs, [
-      { type: 'band', label: 'Ensemble 10–90%', lo: hs.map(function (h) { return h.elo; }), hi: hs.map(function (h) { return h.ehi; }) }
+      { type: 'band', label: 'Likely range', lo: hs.map(function (h) { return h.elo; }), hi: hs.map(function (h) { return h.ehi; }) }
     ].concat(lines('temperature_2m')).concat([
       { type: 'line', label: 'Feels like', col: 'var(--text-3)', w: 1.6, dash: '4 3', v: hs.map(function (h) { return h.at; }) },
-      { type: 'line', label: 'Consensus', col: 'var(--text)', w: 2.6, v: hs.map(function (h) { return h.t; }) },
-      { type: 'line', label: 'Dew point', col: '#17885c', w: 1.8, dash: '1 3', v: hs.map(function (h) { return h.td; }) }
-    ]), { unit: '°', pad: 3 }));
+      { type: 'line', label: 'Temperature', col: 'var(--text)', w: 2.6, v: hs.map(function (h) { return h.t; }) }
+    ]).concat(full ? [{ type: 'line', label: 'Dew point', col: '#17885c', w: 1.8, dash: '1 3', v: hs.map(function (h) { return h.td; }) }] : []), { unit: '°', pad: 3 }));
     charts.push(chart('#c-pcp', ev, hs, [
-      { type: 'bar', label: 'Chance (ensembles)', v: hs.map(function (h) { return (h.pop || 0) * 100; }), axis: 'pct' }
-    ].concat(mods.map(function (m) { return { type: 'line', label: m.name, col: m.col, w: 1.6, v: cum(m), axis: 'r' }; })), { unit: '%', r: { unit: '"', min: 0.25 }, fixed: [0, 100] }));
-    charts.push(chart('#c-wind', ev, hs, [
-      { type: 'band', label: 'Gust range', lo: hs.map(function (h) { return Math.min.apply(null, ids.map(function (m) { return U.M[m].wind_gusts_10m[h.i]; }).filter(function (x) { return x != null; })); }), hi: hs.map(function (h) { return Math.max.apply(null, ids.map(function (m) { return U.M[m].wind_gusts_10m[h.i]; }).filter(function (x) { return x != null; })); }) },
+      { type: 'bar', label: 'Chance of rain', v: hs.map(function (h) { return (h.pop || 0) * 100; }), axis: 'pct' }
+    ].concat(full ? mods.map(function (m) { return { type: 'line', label: m.name, col: m.col, w: 1.6, v: cumM(m), axis: 'r' }; })
+      : [{ type: 'line', label: 'Expected rain', col: 'var(--rain)', w: 2.4, v: expected, axis: 'r' }]), { unit: '%', r: { unit: '"', min: 0.25 }, fixed: [0, 100] }));
+    var gl = function (f) { return hs.map(function (h) { return f.apply(null, ids.map(function (m) { return U.M[m].wind_gusts_10m[h.i]; }).filter(function (x) { return x != null; })); }); };
+    charts.push(chart('#c-wind', ev, hs, (full ? [{ type: 'band', label: 'Gust range', lo: gl(Math.min), hi: gl(Math.max) }] : []).concat([
       { type: 'line', label: 'Gusts', col: 'var(--storm)', w: 1.8, dash: '4 3', v: hs.map(function (h) { return h.gust; }) },
       { type: 'line', label: 'Wind', col: 'var(--text)', w: 2.4, v: hs.map(function (h) { return h.wind; }) }
-    ], { unit: ' mph', min0: true }));
-    $('#l-temp').innerHTML = legend([{ label: 'Consensus', col: 'var(--text)' }, { label: 'Feels like', col: 'var(--text-3)', dash: 1 }, { label: 'Dew point', col: '#17885c', dash: 1 }, { label: 'Ensembles 10–90%', band: 1 }].concat(mods.map(function (m) { return { label: m.name, col: m.col, thin: 1 }; })));
-    $('#l-pcp').innerHTML = legend([{ label: 'Chance %', bar: 1 }].concat(mods.map(function (m) { return { label: m.name + ' total ' + inch(cum(m).slice(-1)[0]) + '"', col: m.col, thin: 1 }; })));
-    $('#l-wind').innerHTML = legend([{ label: 'Wind', col: 'var(--text)' }, { label: 'Gusts', col: 'var(--storm)', dash: 1 }, { label: 'Gust range across models', band: 1 }]);
-    window.addEventListener('resize', debounce(function () { renderCharts(ev, H, U); }, 200), { once: true });
+    ]), { unit: ' mph', min0: true }));
+    $('#l-temp').innerHTML = legend([{ label: 'Temperature', col: 'var(--text)' }, { label: 'Feels like', col: 'var(--text-3)', dash: 1 }, { label: 'Likely range', band: 1 }]
+      .concat(full ? [{ label: 'Dew point', col: '#17885c', dash: 1 }].concat(mods.map(function (m) { return { label: m.name, col: m.col, thin: 1 }; })) : []));
+    $('#l-pcp').innerHTML = legend([{ label: 'Chance of rain (left)', bar: 1 }].concat(full
+      ? mods.map(function (m) { return { label: m.name + ' total ' + inch(cumM(m).slice(-1)[0]) + '"', col: m.col, thin: 1 }; })
+      : [{ label: 'Expected rain, inches (right)', col: 'var(--rain)' }]));
+    $('#l-wind').innerHTML = legend([{ label: 'Wind', col: 'var(--text)' }, { label: 'Gusts', col: 'var(--storm)', dash: 1 }].concat(full ? [{ label: 'Gust range across models', band: 1 }] : []));
+    if (!renderCharts.wired) {
+      renderCharts.wired = true;
+      $('#showmodels').addEventListener('change', function () { renderCharts(ev, H, U); });
+      window.addEventListener('resize', debounce(function () { renderCharts(ev, H, U); }, 200));
+    }
   }
   function legend(items) {
     return items.map(function (i) {
@@ -543,13 +554,22 @@
     }).join('') + '</div>';
     function meter(label, p) { return '<div class="meter"><span>' + label + '</span><span class="bar"><i style="width:' + Math.round(p * 100) + '%"></i></span><b class="num">' + Math.round(p * 100) + '%</b></div>'; }
 
-    // confidence: how much the systems and models disagree
+    var c = U.conf || confidence(U);
+    $('#confidence').innerHTML = '<span class="conf-pill ' + c.level.toLowerCase() + '">' + c.level + ' confidence</span><span>' + c.why + '.</span>';
+  }
+
+  // How much the models and ensembles disagree over the event: {level, why (for weather fans), plain}
+  function confidence(U) {
+    var mods = MODELS.filter(function (m) { return U.M[m.id]; });
+    var eIdx = {}; U.etime.forEach(function (s, i) { eIdx[s] = i; });
+    var ej = U.win.map(function (i) { return eIdx[U.t[i]]; }).filter(function (j) { return j != null; });
     var dets = mods.map(function (m) { return sum(U.win.map(function (i) { return U.M[m.id].precipitation[i]; })); });
     var wet = dets.filter(function (x) { return x >= 0.1; }).length, dry = dets.filter(function (x) { return x < 0.02; }).length;
-    var sp = mean(rows.map(function (r) { return r.spread; })) || 0;
+    var sp = mean(Object.keys(U.E).map(function (k) { var T = U.E[k].temperature_2m; return mean(ej.map(function (j) { return pct(T.map(function (c) { return c[j]; }), 0.9) - pct(T.map(function (c) { return c[j]; }), 0.1); })); })) || 0;
     var split = wet && dry, level = split || sp > 12 ? 'Low' : sp > 7 ? 'Medium' : 'High';
     var why = split ? wet + ' of ' + dets.length + ' models are wet and ' + dry + ' are dry' : sp > 7 ? 'The ensembles spread temperatures by about ' + Math.round(sp) + '°' : 'Models and ensembles agree well';
-    $('#confidence').innerHTML = '<span class="conf-pill ' + level.toLowerCase() + '">' + level + ' confidence</span><span>' + why + '.</span>';
+    var plain = split ? 'Whether it rains is still uncertain' : sp > 7 ? 'Temperatures could still shift by several degrees' : 'The forecast is settled';
+    return { level: level, why: why, plain: plain };
   }
 
   // ---------- big picture ----------
@@ -585,6 +605,7 @@
           });
         });
         window.addEventListener('resize', debounce(function () { syn.resize(); }, 200));
+        $('#s-details').addEventListener('toggle', function () { if ($('#s-details').open) syn.resize(); });
         document.addEventListener('wxmap-theme', function () { syn.draw(); });
       });
     }).catch(function () {
