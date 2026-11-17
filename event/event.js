@@ -576,40 +576,68 @@
   var syn;
   function renderMap(ev, U) {
     var note = $('#mapnote');
-    if (!ev.saved) { note.hidden = false; note.textContent = 'The big-picture maps are built for saved briefings. Ask for this event to be saved to get them.'; $('.mapctl').hidden = true; return; }
-    getJSON(DATA + ev.slug + '/synoptic.json', 1).then(function (doc) {
+    if (!ev.saved) { note.hidden = false; note.textContent = 'The rain and snow map is built for saved briefings.'; $('.mapctl').hidden = true; $('#mtabs').hidden = true; return; }
+    var docs = {}, cur = 'blend', layer = 'sfc', sl = $('#mslider'), timer = null;
+    var utcOf = function (v) { return Date.parse(v.replace('Z', ':00Z')); };
+    var localOf = function (v) { return new Date(utcOf(v) + U.off * 1000).toISOString().slice(0, 16); };
+    var label = function () {
+      var d = docs[cur], t = localOf(d.times[+sl.value]);
+      $('#mtime').textContent = fmt(t, { weekday: 'short' }) + ' ' + hourWord(t);
+    };
+    var meta = function () {
+      var d = docs[cur], c = d.cycle ? d.cycle.slice(5, 10).replace('-', '/') + ' ' + d.cycle.slice(11) : '';
+      $('#map-meta').textContent = cur === 'blend'
+        ? 'Most likely rain and snow from ' + d.members + ' forecast runs · each frame is the 6 hours ending at the time shown'
+        : d.name + ' run of ' + c + ' · each frame is the 6 hours ending at the time shown';
+      $('#maplegend').innerHTML = Synoptic.legend(layer, cur === 'blend');
+    };
+    var get = function (id) {
+      if (docs[id]) return Promise.resolve(docs[id]);
+      return getJSON(DATA + ev.slug + '/synoptic' + (id === 'blend' ? '' : '-' + id) + '.json', 1).then(function (d) { docs[id] = d; return d; });
+    };
+    var show = function (id) {
+      var keep = docs[cur] ? docs[cur].times[+sl.value] : null;
+      return get(id).then(function (d) {
+        cur = id;
+        sl.max = d.times.length - 1;
+        var i = keep ? d.times.indexOf(keep) : -1;
+        if (i < 0 && keep) { i = 0; d.times.forEach(function (t, k) { if (Math.abs(utcOf(t) - utcOf(keep)) < Math.abs(utcOf(d.times[i]) - utcOf(keep))) i = k; }); }
+        if (i < 0) i = 0;
+        sl.value = i; syn.i = i; syn.setDoc(d); label(); meta();
+        document.querySelectorAll('#mtabs button').forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.m === id)); });
+      });
+    };
+    get('blend').then(function (doc) {
       syn = new Synoptic($('#map'), { lat: ev.lat, lon: ev.lon });
-      var sl = $('#mslider'); sl.max = doc.times.length - 1;
+      $('#mtabs').innerHTML = (doc.models || [{ id: 'blend', name: 'Most likely' }]).map(function (m) {
+        return '<button type="button" data-m="' + m.id + '" aria-pressed="' + (m.id === 'blend') + '">' + esc(m.name) + '</button>';
+      }).join('');
       var key = (ev.highlight && ev.highlight[0]) ? ev.highlight[0].start : ev.start;
-      var keyUtc = new Date(D(key).getTime() - U.off * 1000).getTime();
-      var best = 0; doc.times.forEach(function (t, i) { if (Math.abs(Date.parse(t.valid.replace('Z', ':00Z')) - keyUtc) < Math.abs(Date.parse(doc.times[best].valid.replace('Z', ':00Z')) - keyUtc)) best = i; });
-      var label = function (i) {
-        var t = new Date(Date.parse(doc.times[i].valid.replace('Z', ':00Z')) + U.off * 1000).toISOString().slice(0, 16);
-        $('#mtime').textContent = fmt(t, { weekday: 'short' }) + ' ' + hourWord(t);
-      };
-      $('#map-meta').textContent = 'GFS run ' + doc.cycle.slice(5, 10).replace('-', '/') + ' ' + doc.cycle.slice(11) + ' · precipitation is the 6 h ending at the time shown';
-      $('#maplegend').innerHTML = Synoptic.legend('sfc');
+      var keyUtc = D(key).getTime() - U.off * 1000, best = 0;
+      doc.times.forEach(function (t, i) { if (Math.abs(utcOf(t) - keyUtc) < Math.abs(utcOf(doc.times[best]) - keyUtc)) best = i; });
+      syn.i = best;
       return syn.load(doc).then(function () {
-        sl.value = best; syn.set(best); label(best);
-        sl.addEventListener('input', function () { syn.set(+sl.value); label(+sl.value); });
-        var timer = null;
+        sl.max = doc.times.length - 1; sl.value = best; syn.set(best); label(); meta();
+        sl.addEventListener('input', function () { syn.set(+sl.value); label(); });
         $('#mplay').addEventListener('click', function () {
           if (timer) { clearInterval(timer); timer = null; $('#mplay').classList.remove('on'); return; }
           $('#mplay').classList.add('on');
-          timer = setInterval(function () { var i = (+sl.value + 1) % doc.times.length; sl.value = i; syn.set(i); label(i); }, 900);
+          timer = setInterval(function () { var i = (+sl.value + 1) % docs[cur].times.length; sl.value = i; syn.set(i); label(); }, 900);
+        });
+        document.querySelectorAll('#mtabs button').forEach(function (b) {
+          b.addEventListener('click', function () { show(b.dataset.m).catch(function () { toast('That model is not available for this event yet'); }); });
         });
         document.querySelectorAll('.seg [data-layer]').forEach(function (b) {
           b.addEventListener('click', function () {
             document.querySelectorAll('.seg [data-layer]').forEach(function (x) { x.setAttribute('aria-pressed', String(x === b)); });
-            syn.setLayer(b.dataset.layer); $('#maplegend').innerHTML = Synoptic.legend(b.dataset.layer);
+            layer = b.dataset.layer; syn.setLayer(layer); meta();
           });
         });
         window.addEventListener('resize', debounce(function () { syn.resize(); }, 200));
-        $('#s-details').addEventListener('toggle', function () { if ($('#s-details').open) syn.resize(); });
         document.addEventListener('wxmap-theme', function () { syn.draw(); });
       });
     }).catch(function () {
-      note.hidden = false; note.textContent = 'The map for this event is not built yet; it refreshes after each GFS run.'; $('.mapctl').hidden = true;
+      note.hidden = false; note.textContent = 'The map for this event is not built yet; it refreshes after each model run.'; $('.mapctl').hidden = true; $('#mtabs').hidden = true;
     });
   }
 

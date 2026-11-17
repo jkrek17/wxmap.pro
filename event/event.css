@@ -331,3 +331,8 @@ body.sheet-open { overflow: hidden; }
 .fans summary { cursor: pointer; color: var(--accent); font-size: .9375rem; }
 .fans p { margin-top: 10px; }
 @media print { .nerd-body { display: grid !important; } }
+
+/* rain map: model tabs above the map, the blend's "fainter = less likely" key */
+.mtabs { margin: 0 0 12px; display: flex; flex-wrap: wrap; }
+.mtabs:empty { display: none; }
+.maplegend .fade i { width: 22px; height: 10px; border-radius: 2px; background: linear-gradient(90deg, rgba(46,154,58,.18), rgba(46,154,58,.9)); }
