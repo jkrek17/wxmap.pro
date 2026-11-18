@@ -38,6 +38,10 @@ a:hover { color: var(--accent-strong); }
 .sitebar nav { margin-left: auto; display: flex; align-items: center; gap: 4px; }
 .sitebar nav a { color: var(--text-2); text-decoration: none; padding: 6px 10px; border-radius: var(--radius-sm); font-size: 0.9375rem; }
 .sitebar nav a:hover { color: var(--text); background: var(--surface-2); }
+.sitebar nav a[aria-current="page"] { color: var(--text); background: var(--surface-2); }
+/* the page's name beside the wordmark, the same on every page that has one */
+.brand .product { margin-left: 2px; padding-left: 10px; border-left: 1px solid var(--border); color: var(--text-3); font: 600 0.72rem/1 var(--mono); letter-spacing: 0.08em; text-transform: uppercase; }
+@media (max-width: 420px) { .sitebar nav > a:not([aria-current]) { display: none; } }
 
 /* buttons */
 .btn {
