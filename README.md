@@ -21,6 +21,7 @@ map, which is the marine wind forecast with live cyclone phase space on one glob
 - The mark is two offset closed isobars around a blue centre, packed tighter on one side like a deepening low (`assets/favicon.svg`, and inline on each page's brand).
 - IBM Plex Sans Condensed for headings, IBM Plex Sans for text, IBM Plex Mono for numbers and labels.
 - Colour is kept for the wind scale: under 34 kt, gale 34–47, storm 48–63, hurricane force 64+.
+  One hazard scale for every page, in `tokens.css`: `--wind-*` are the map's fills (the same as the marine wind page), `--line-*` the warning lines, and `--calm`/`--gale`/`--storm`/`--hurricane`/`--extreme` the same hues as ink for the page. Anything that is not a wind class (lab rarity rings) uses a neutral scale, never these hues; bomb watch levels are tints of the hurricane-force colour.
   Forecast colours on the map are the same in both themes; only the panels change.
 - Units as forecasters write them: kt, mb, °N.
 

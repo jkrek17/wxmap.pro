@@ -2,7 +2,6 @@
 [hidden] { display: none !important; }
 
 :root {
-  --ok: #17885c; --warn: #b07c00; --err: #c0362c;
   --shadow-1: 0 1px 2px rgba(14, 34, 54, .06), 0 4px 16px rgba(14, 34, 54, .06);
   --shadow-2: 0 10px 40px rgba(14, 34, 54, .18);
   --hero-a: #d8eaf4; --hero-b: #eef4f8;
@@ -14,14 +13,14 @@
     --shadow-1: 0 1px 2px rgba(0, 0, 0, .3), 0 4px 18px rgba(0, 0, 0, .25);
     --shadow-2: 0 10px 40px rgba(0, 0, 0, .5);
     --hero-a: #12324a; --hero-b: #08121d; --night: rgba(255, 255, 255, .035);
-    --wx-cloud: #8193a7; --wx-cloud-dark: #5f7287; --wx-moon: #c6d3e6; --rain: #5aa6ef; --ok: #3fbf88; --warn: #e8be3a; --err: #f07a6c;
+    --wx-cloud: #8193a7; --wx-cloud-dark: #5f7287; --wx-moon: #c6d3e6; --rain: #5aa6ef;
   }
 }
 :root[data-theme="dark"] {
   --shadow-1: 0 1px 2px rgba(0, 0, 0, .3), 0 4px 18px rgba(0, 0, 0, .25);
   --shadow-2: 0 10px 40px rgba(0, 0, 0, .5);
   --hero-a: #12324a; --hero-b: #08121d; --night: rgba(255, 255, 255, .035);
-  --wx-cloud: #8193a7; --wx-cloud-dark: #5f7287; --wx-moon: #c6d3e6; --rain: #5aa6ef; --ok: #3fbf88; --warn: #e8be3a; --err: #f07a6c;
+  --wx-cloud: #8193a7; --wx-cloud-dark: #5f7287; --wx-moon: #c6d3e6; --rain: #5aa6ef;
 }
 
 html { scroll-behavior: smooth; scroll-padding-top: 120px; }
@@ -33,7 +32,6 @@ body.sheet-open { overflow: hidden; }
 /* app bar */
 .appbar { position: sticky; top: 0; z-index: 30; background: color-mix(in srgb, var(--surface) 86%, transparent); backdrop-filter: saturate(1.4) blur(14px); -webkit-backdrop-filter: saturate(1.4) blur(14px); border-bottom: 1px solid var(--border); }
 .appbar .wrap { display: flex; align-items: center; gap: 12px; height: 56px; padding-top: env(safe-area-inset-top, 0); }
-.appname { margin-left: 4px; padding: 3px 8px; border-radius: 999px; background: var(--accent-soft); color: var(--accent-strong); font: 600 .75rem/1 var(--mono); letter-spacing: .06em; text-transform: uppercase; }
 .appbar nav { margin-left: auto; display: flex; align-items: center; gap: 8px; }
 .newbtn { font-size: .875rem; color: var(--text-2); text-decoration: none; padding: 7px 12px; border-radius: 999px; border: 1px solid var(--border); }
 .newbtn:hover { background: var(--surface-2); color: var(--text); }

@@ -14,9 +14,6 @@
   --sky: radial-gradient(ellipse at 50% 45%, #e9f1f6 0%, #d5e3ed 55%, #c3d5e2 90%);
   --scrim: rgba(14, 34, 54, 0.35);
   --line-swatch: #43566b;
-  --ok: #17885c;
-  --warn: #a87a00;
-  --err: #c0362c;
   --font: var(--sans);
   color-scheme: light;
 }
@@ -30,9 +27,6 @@
     --sky: radial-gradient(ellipse at 50% 45%, #14284a 0%, #0a1528 45%, #050a14 80%);
     --scrim: rgba(3, 7, 15, 0.6);
     --line-swatch: #e4ecf3;
-    --ok: #34d399;
-    --warn: #fbbf24;
-    --err: #f87171;
     color-scheme: dark;
   }
 }
@@ -45,9 +39,6 @@
   --sky: radial-gradient(ellipse at 50% 45%, #14284a 0%, #0a1528 45%, #050a14 80%);
   --scrim: rgba(3, 7, 15, 0.6);
   --line-swatch: #e4ecf3;
-  --ok: #34d399;
-  --warn: #fbbf24;
-  --err: #f87171;
   color-scheme: dark;
 }
 
@@ -73,6 +64,11 @@ input[type="range"]::-moz-range-track { background: var(--border-strong); }
 a.brand { color: var(--text); text-decoration: none; }
 .brand h1 { font: 600 17px/1.1 var(--display); letter-spacing: 0.01em; }
 .brand .tld { color: var(--text-3); font-weight: 500; }
+/* the valid time matters more than the wordmark: where the bar is too tight for
+   both, the brand shrinks to the mark (still the link home) instead of sliding
+   under the valid time */
+.topbar .brand { flex: none; }
+@media (max-width: 1700px) { .topbar .brand-text { display: none; } }
 .topbar-actions .theme { flex: none; }
 /* phones follow the system theme; the top bar has no room for the switch */
 @media (max-width: 760px) { .topbar-actions .theme { display: none; } }

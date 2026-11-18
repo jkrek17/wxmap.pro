@@ -26,11 +26,32 @@
   --land-text: #4a4636;     /* 7.7:1 on --land */
   --swatch-outline: rgba(13, 32, 51, 0.3);  /* legend chips reach 3:1 on white */
   --hero: #eef4f8;          /* the landing hero sits on the water, not on a card */
-  /* the wind scale (kt), same hues in both themes, tuned per theme */
+  /* The hazard scale. One meaning per hue on every page: gale amber, storm
+     vermilion, hurricane force raspberry, extreme violet.
+     --wind-*: the map's fill colours, identical in both themes (the data canvas
+     is dark in both). Checked with Machado colour-blindness simulation: no two
+     classes closer than CIELAB dE 16 for protan, deutan or tritan viewers.
+     --line-*: warning and members-agree lines drawn on the dark map. */
+  --wind-30: #3f74ab;
+  --wind-34: #e8d27a;
+  --wind-41: #f5ab2a;
+  --wind-48: #e06f2e;
+  --wind-56: #c9372c;
+  --wind-64: #b03454;
+  --wind-80: #c86fd8;
+  --line-gale: #fbbf24;
+  --line-storm: #f97316;
+  --line-hf: #f0679a;
+  /* the same hues as ink, for strokes, particles and text on this theme's page */
   --calm: #8fb3c9;          /* under 34 kt */
   --gale: #c99a06;          /* 34-47 kt */
   --storm: #d4561c;         /* 48-63 kt */
   --hurricane: #b3155c;     /* 64 kt and over */
+  --extreme: #8e3fa6;       /* 80 kt and over */
+  /* status, shared by every page */
+  --ok: #17885c;
+  --warn: #a87a00;
+  --err: #c0362c;
 
   /* type */
   --display: "IBM Plex Sans Condensed", "Arial Narrow", "Helvetica Neue", Arial, sans-serif;
@@ -72,7 +93,11 @@
     --calm: #4f7e9c;
     --gale: #e8be3a;
     --storm: #f07a42;
-    --hurricane: #e2508f;
+    --hurricane: #f0679a;
+    --extreme: #c86fd8;
+    --ok: #3fbf88;
+    --warn: #e8be3a;
+    --err: #f07a6c;
     color-scheme: dark;
   }
 }
@@ -97,6 +122,10 @@
   --calm: #4f7e9c;
   --gale: #e8be3a;
   --storm: #f07a42;
-  --hurricane: #e2508f;
+  --hurricane: #f0679a;
+  --extreme: #c86fd8;
+  --ok: #3fbf88;
+  --warn: #e8be3a;
+  --err: #f07a6c;
   color-scheme: dark;
 }

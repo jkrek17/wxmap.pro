@@ -1,10 +1,12 @@
 /* wxmap.pro lab: the lab's panel sections and low card, on top of map/map.css
    (house tokens, glass surfaces, the cyclone list and card styles it reuses). */
 
-.swatch-rare {
-  background: transparent; border-radius: 50%; width: 12px; height: 12px;
-  border: 3px solid; border-color: #c0362c #e8702a #e8b923 #8a8a86;
-}
+/* rarity: a ring that gets heavier and stronger as the low gets rarer (no hazard colours) */
+.swatch-rare { background: transparent; border-radius: 50%; width: 12px; height: 12px; border: 3px solid var(--text); }
+.lab-ring { flex: none; width: 12px; height: 12px; border-radius: 50%; border: 1px solid var(--text-3); opacity: .55; }
+.lab-ring[data-tier="1"] { border-width: 1.6px; border-color: var(--text-2); opacity: .75; }
+.lab-ring[data-tier="2"] { border-width: 2.4px; border-color: var(--text); opacity: .9; }
+.lab-ring[data-tier="3"] { border-width: 3.4px; border-color: var(--text); opacity: 1; }
 
 /* the panel's two tabs: Lab, and the marine wind page's own sections */
 .panel-tabs { margin: 0 14px 4px; }

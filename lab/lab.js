@@ -16,9 +16,14 @@
   'use strict';
   var DATA = document.querySelector('meta[name="lab-data"]').content;
   var CLASSES = ['below gale', 'gale', 'storm', 'hurricane force'];
-  var CLS_HEX = ['#8a8a86', '#e8b923', '#e8702a', '#c0362c'];
-  var RARE = [[99, '#c0362c', 'Rarer than 99%'], [95, '#e8702a', 'Rarer than 95%'], [80, '#e8b923', 'Rarer than 80%'], [-1, '#8a8a86', 'Common']];
-  var LEVEL_HEX = { 1: '#f3c94a', 2: '#ef8a2f', 3: '#d1342b' };
+  // wind classes in the house hazard scale (tokens.css): below gale, gale, storm, hurricane force
+  var CLS_HEX = ['#7d90a4', '#e8d27a', '#e06f2e', '#b03454'];
+  // rarity is not a wind class, so it never borrows hazard colours: the ring gets
+  // brighter and heavier as the low gets rarer (white on the dark map; tier 0-3 for panels)
+  var RARE = [[99, 'rgba(255,255,255,1)', 4.2, 'Rarer than 99%', 3], [95, 'rgba(255,255,255,0.85)', 3, 'Rarer than 95%', 2],
+    [80, 'rgba(255,255,255,0.6)', 2.2, 'Rarer than 80%', 1], [-1, 'rgba(255,255,255,0.32)', 1.4, 'Common', 0]];
+  // bomb watch is a chance of hurricane force, so its levels are tints of that colour
+  var LEVEL_HEX = { 1: '#e3a3b6', 2: '#c96682', 3: '#b03454' };
   var LEVEL_NAME = { 1: 'Low', 2: 'Medium', 3: 'High' };
   var LIST_MAX = 6;
 
@@ -97,9 +102,9 @@
     map.addLayer({ id: 'lab-bomb-edge', type: 'line', source: 'lab-bomb', paint: { 'line-color': ['get', 'hex'], 'line-width': 0.6, 'line-opacity': 0.8 } });
     map.addSource('lab-lows', { type: 'geojson', data: fc([]) });
     map.addLayer({ id: 'lab-lows-halo', type: 'circle', source: 'lab-lows', paint: {
-      'circle-radius': ['get', 'r'], 'circle-color': 'rgba(0,0,0,0)', 'circle-stroke-color': 'rgba(5,10,20,0.7)', 'circle-stroke-width': ['case', ['get', 'sel'], 6.5, 5] } });
+      'circle-radius': ['get', 'r'], 'circle-color': 'rgba(0,0,0,0)', 'circle-stroke-color': 'rgba(5,10,20,0.7)', 'circle-stroke-width': ['case', ['get', 'sel'], ['+', ['get', 'w'], 3.9], ['+', ['get', 'w'], 2.4]] } });
     map.addLayer({ id: 'lab-lows', type: 'circle', source: 'lab-lows', paint: {
-      'circle-radius': ['get', 'r'], 'circle-color': 'rgba(0,0,0,0)', 'circle-stroke-color': ['get', 'hex'], 'circle-stroke-width': ['case', ['get', 'sel'], 4, 2.6] } });
+      'circle-radius': ['get', 'r'], 'circle-color': 'rgba(0,0,0,0)', 'circle-stroke-color': ['get', 'hex'], 'circle-stroke-width': ['case', ['get', 'sel'], ['+', ['get', 'w'], 1.4], ['get', 'w']] } });
     map.addLayer({ id: 'lab-hit', type: 'circle', source: 'lab-lows', paint: { 'circle-radius': ['+', ['get', 'r'], 6], 'circle-color': 'rgba(0,0,0,0)' } });
     map.on('click', 'lab-hit', function (e) { if (S.on && e.features.length) select(e.features[0].properties.key, false); });
     map.on('mouseenter', 'lab-hit', function () { if (S.on) map.getCanvas().style.cursor = 'pointer'; });
@@ -116,7 +121,7 @@
       var vis = S.on ? 'visible' : 'none';
       ['lab-lows-halo', 'lab-lows', 'lab-hit'].forEach(function (id) { map.setLayoutProperty(id, 'visibility', vis); });
       map.getSource('lab-lows').setData(fc(live().map(function (l) {
-        return { type: 'Feature', properties: { key: l.key, hex: rare(l.rarity.pct)[1], r: radius(l.hpa), sel: S.sel === l.key },
+        return { type: 'Feature', properties: { key: l.key, hex: rare(l.rarity.pct)[1], w: rare(l.rarity.pct)[2], r: radius(l.hpa), sel: S.sel === l.key },
           geometry: { type: 'Point', coordinates: [K.wrapLon(l.lon), l.lat] } };
       })));
     }
@@ -179,7 +184,7 @@
     ol.innerHTML = at + rows.map(function (l) {
       var p = l.rarity.pct;
       return '<li><button type="button" data-key="' + esc(l.key) + '"' + (S.sel === l.key ? ' aria-current="true"' : '') + '>' +
-        '<i style="--c:' + rare(p)[1] + '"></i><span class="cps-name">' + (p == null ? 'No reference' : 'Deeper than ' + Math.round(p) + '%') + '</span>' +
+        '<i class="lab-ring" data-tier="' + rare(p)[4] + '"></i><span class="cps-name">' + (p == null ? 'No reference' : 'Deeper than ' + Math.round(p) + '%') + '</span>' +
         '<span class="cps-where">' + place(l.lat, l.lon) + '</span><b>' + Math.round(l.hpa) + ' mb</b></button></li>';
     }).join('');
   }
@@ -223,7 +228,7 @@
       ', valid ' + K.fmtTime(l.valid);
     var h = '<div class="lab-block"><h4>How rare</h4>';
     if (r.pct == null) h += '<p>Too few past lows near here to rank it.</p>';
-    else h += '<p class="lab-big" style="--c:' + rr[1] + '">Deeper than ' + Math.round(r.pct) + '%</p>' +
+    else h += '<p class="lab-big" style="--c:var(--text);border-left-width:' + (2 + rr[4]) + 'px">Deeper than ' + Math.round(r.pct) + '%</p>' +
       '<p>of ' + r.n + ' ERA5 lows within 540 nm in ' + months(new Date(l.valid).getUTCMonth() + 1, r.months) +
       ', 1979-2025 (their lowest pressure). Deepest of them: ' + Math.round(r.deepest) + ' mb.</p>';
     h += '</div><div class="lab-block"><h4>Storm Twins</h4>';
