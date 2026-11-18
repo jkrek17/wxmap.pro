@@ -46,7 +46,7 @@
     var brand = doc.querySelector('.topbar .brand');
     if (brand) {
       var a = el('<a class="brand" href="../" aria-label="wxmap.pro home">' +
-        '<svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="14" fill="none" stroke="currentColor" stroke-width="1.8" opacity=".35"/><circle cx="16" cy="16" r="9" fill="none" stroke="currentColor" stroke-width="1.8" opacity=".6"/><circle cx="16" cy="16" r="4" fill="var(--accent)"/></svg>' +
+        '<svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true"><ellipse cx="17.4" cy="14.6" rx="13.6" ry="12.2" transform="rotate(-24 17.4 14.6)" fill="none" stroke="currentColor" stroke-width="1.8" opacity=".38"/><ellipse cx="16.4" cy="15.6" rx="8.6" ry="7.6" transform="rotate(-24 16.4 15.6)" fill="none" stroke="currentColor" stroke-width="1.8" opacity=".68"/><circle cx="15.6" cy="16.4" r="3.6" fill="var(--accent)"/></svg>' +
         '<div class="brand-text"><h1 id="title">wxmap<span class="tld">.pro</span></h1><p>Marine wind &amp; cyclone phase space</p></div></a>');
       brand.replaceWith(a);
     }

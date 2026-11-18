@@ -11,7 +11,7 @@
   --surface-raised: rgba(14, 34, 54, 0.04);
   --surface-hover: rgba(14, 34, 54, 0.08);
   --shadow: 0 8px 24px rgba(14, 34, 54, 0.16);
-  --sky: radial-gradient(ellipse at 50% 45%, #f4f6f8 0%, #dfe6ed 55%, #c9d3dd 90%);
+  --sky: radial-gradient(ellipse at 50% 45%, #e9f1f6 0%, #d5e3ed 55%, #c3d5e2 90%);
   --scrim: rgba(14, 34, 54, 0.35);
   --line-swatch: #43566b;
   --ok: #17885c;
