@@ -281,7 +281,7 @@
   }
 
   // ---------- render ----------
-  function render(ev, f) {
+  function header(ev) {
     $('#briefing').hidden = false; $('#newbtn').hidden = false;
     document.title = ev.title + ' · Event Forecast';
     $('#h-title').textContent = ev.title;
@@ -290,14 +290,16 @@
     $('#h-when').textContent = sameDay
       ? dayShort(ev.start) + ' · ' + hourWord(ev.start) + '–' + hourWord(ev.end)
       : fmt(ev.start, { weekday: 'short' }) + ' ' + hourWord(ev.start) + ' → ' + fmt(ev.end, { weekday: 'short', month: 'short', day: 'numeric' }) + ' ' + hourWord(ev.end);
+  }
 
-    if (ev.briefing) renderBrief(ev.briefing);
+  function render(ev, f) {
+    if (ev.briefing && f.beyond) renderBrief(ev.briefing, null);
     renderSun(ev, f);
     setTimeout(function () { renderTypical(ev); }, 400);
 
     if (f.beyond) {
       $('#glance').innerHTML = '<div class="glance-far"><b>Beyond the forecast range.</b> Forecast models reach about 16 days. Below is the typical weather for these dates; a full forecast appears 16 days before the event.</div>';
-      ['#s-timeline', '#s-wear', '#s-details'].forEach(function (s) { $(s).hidden = true; });
+      ['#s-timeline', '#s-wear', '#s-map', '#s-models'].forEach(function (s) { $(s).hidden = true; }); $('#s-details').open = true;
       syncTabs();
       chips(ev, f, null);
       return;
@@ -308,6 +310,9 @@
     var parts = dayParts(H, ev, U);
     U.conf = confidence(U, ev);
     renderGlance(ev, H, parts, U);
+    var hz = hazards(ev, H, parts, U);
+    renderSummary(ev, H, parts, U, hz, f);
+    nwsAlerts(ev, f);
     chips(ev, f, U);
     renderParts(ev, parts);
     renderCharts(ev, H, U);
@@ -331,16 +336,148 @@
     document.querySelectorAll('#tabs a').forEach(function (a) { var t = document.querySelector(a.getAttribute('href')); a.hidden = !t || t.hidden; });
   }
 
-  function renderBrief(b) {
-    $('#s-brief').hidden = false;
-    $('#b-issued').textContent = b.issued ? 'Issued ' + fmt(b.issued, { weekday: 'short', hour: 'numeric', minute: '2-digit' }) + (b.tzabbr ? ' ' + b.tzabbr : '') : '';
+  // A hand-written forecaster's note for a saved event, shown under the automatic summary.
+  function renderBrief(b, into) {
     var h = '';
-    if (b.headline) h += '<p class="headline">' + md(b.headline) + '</p>';
+    if (b.headline) h += '<p><b>' + md(b.headline) + '</b></p>';
     (b.paragraphs || []).forEach(function (p) { h += '<p>' + md(p) + '</p>'; });
-    (b.sections || []).forEach(function (s) { h += '<h3>' + esc(s.title) + '</h3>' + s.text.split('\n\n').map(function (p) { return '<p>' + md(p) + '</p>'; }).join(''); });
-    if (b.confidence) h += '<p class="conf"><b>Forecast confidence.</b> ' + md(b.confidence) + '</p>';
-    if (b.fans) h += '<details class="fans"><summary>Forecast details: what the models show</summary>' + b.fans.split('\n\n').map(function (p) { return '<p>' + md(p) + '</p>'; }).join('') + '</details>';
+    (b.sections || []).forEach(function (s) { h += '<h4>' + esc(s.title) + '</h4>' + s.text.split('\n\n').map(function (p) { return '<p>' + md(p) + '</p>'; }).join(''); });
+    if (b.confidence) h += '<p><b>Forecast confidence.</b> ' + md(b.confidence) + '</p>';
+    if (b.fans) h += b.fans.split('\n\n').map(function (p) { return '<p class="small">' + md(p) + '</p>'; }).join('');
+    var when = b.issued ? 'issued ' + fmt(b.issued, { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) + (b.tzabbr ? ' ' + b.tzabbr : '') : '';
+    var html = '<details class="fnote"' + (into ? '' : ' open') + '><summary>Forecaster discussion' + (when ? ' <span class="meta">' + when + '</span>' : '') + '</summary>' +
+      (into ? '<p class="small muted">Written from the forecasts at that time. The summary above updates with every model run and takes precedence.</p>' : '') + h + '</details>';
+    $('#s-brief').hidden = false;
+    if (into) into.insertAdjacentHTML('beforeend', html); else $('#b-body').innerHTML = html;
+  }
+
+  // ---------- automatic summary ----------
+  // Plain, neutral wording from the numbers, the same rules for every event:
+  // temperatures in decades, NWS chance words, timing by part of day, hazards first.
+  function decade(x) {
+    var r = Math.round(x);
+    if (r < 0) return 'below zero'; if (r < 10) return 'single digits';
+    var d = Math.floor(r / 10) * 10, u = r - d;
+    return (u <= 3 ? 'low ' : u <= 6 ? 'mid ' : 'upper ') + d + 's';
+  }
+  function tempPhrase(lo, hi) {
+    if (hi - lo <= 4) return 'near ' + Math.round((lo + hi) / 2) + '°';
+    var a = decade(lo), b = decade(hi);
+    return a === b ? 'in the ' + a : a + ' to ' + b;
+  }
+  function skyWord(cloud, night) {
+    if (cloud < 25) return night ? 'Clear' : 'Sunny';
+    if (cloud < 50) return night ? 'Mostly clear' : 'Mostly sunny';
+    if (cloud < 75) return 'Partly cloudy';
+    if (cloud < 90) return 'Mostly cloudy';
+    return 'Cloudy';
+  }
+  // "1–4:30 PM", "11 AM–2 PM"
+  function hourSpan(a, b) {
+    var x = hourWord(a), y = hourWord(b), sx = x.slice(-2), sy = y.slice(-2);
+    return (sx === sy && /M$/.test(sx) && /\d/.test(x) ? x.slice(0, -3) : x) + '–' + y;
+  }
+  // when a day's part of the event runs: "all day", "from 7 AM", "until noon", "1–4:30 PM"
+  function daySpan(from, to) {
+    var a = from.slice(11, 16) === '00:00', b = to.slice(11, 16) === '00:00';
+    return a && b ? 'all day' : b ? 'from ' + hourWord(from) : a ? 'until ' + hourWord(to).toLowerCase() : hourSpan(from, to);
+  }
+  function partWord(p) { return { Overnight: 'overnight', Morning: 'in the morning', Afternoon: 'in the afternoon', Evening: 'in the evening' }[p.label]; }
+  function rainPhrase(U, ps) {
+    var er = ensRain(U, ps[0].from, ps[ps.length - 1].to);
+    if (!er) return { text: 'dry', c: 0 };
+    var code = ps.map(function (p) { return p.code; }).sort(bySev)[0];
+    var words = chanceWords(er.chance, code >= 51 ? code : 61);
+    if (!words) return { text: er.chance < 0.1 ? 'dry' : 'mostly dry', c: er.chance, dry: true };
+    var wet = ps.filter(function (p) { return p.pop >= 0.3; });
+    var ws = wet.map(partWord).filter(function (x, i, a) { return a.indexOf(x) === i; });
+    var when = !ws.length || wet.length === ps.length ? '' : ws.length === 1 ? ', mainly ' + ws[0]
+      : ws.length === 2 ? ', mainly ' + ws[0] + ' and ' + ws[1].replace(/^in the /, '') : ', at times';
+    var amt = er.med >= 0.1 ? ', around ' + er.med.toFixed(2) + ' in' + (er.hi >= er.med * 2.5 && er.hi >= 0.5 ? ' (up to ' + er.hi.toFixed(2) + ' in in the wettest forecasts)' : '') : '';
+    return { text: words.toLowerCase() + when + ' (' + Math.round(er.chance * 100) + '% chance)' + amt, c: er.chance };
+  }
+  function renderSummary(ev, H, parts, U, hz, f) {
+    var days = [];
+    parts.forEach(function (p) { var d = days[days.length - 1]; if (!d || d.day !== p.day) days.push(d = { day: p.day, parts: [] }); d.parts.push(p); });
+    var texts = [];
+    var lines = days.map(function (d) {
+      var hs = [].concat.apply([], d.parts.map(function (p) { return p.hours; }));
+      var ts = hs.map(function (h) { return h.t; }).filter(function (x) { return x != null; });
+      var dayHours = hs.filter(function (h) { return !h.night; });
+      var cloud = mean((dayHours.length ? dayHours : hs).map(function (h) { return h.cloud; }));
+      var rp = rainPhrase(U, d.parts);
+      var gust = Math.max.apply(null, hs.map(function (h) { return h.gust || 0; }));
+      var txt = (rp.c >= 0.55 ? '' : skyWord(cloud, !dayHours.length) + (rp.dry ? ' and ' : ', ')) + rp.text + '. ' +
+        tempPhrase(Math.min.apply(null, ts), Math.max.apply(null, ts)).replace(/^./, function (c) { return c.toUpperCase(); }) + '.' +
+        (gust >= 25 ? ' Gusts to ' + Math.round(gust / 5) * 5 + ' mph.' : '');
+      txt = txt.charAt(0).toUpperCase() + txt.slice(1);
+      texts.push(fmt(d.day + 'T12:00', { weekday: 'long' }) + ': ' + txt);
+      var span = daySpan(d.parts[0].from, d.parts[d.parts.length - 1].to);
+      return '<li><b>' + fmt(d.day + 'T12:00', { weekday: 'long' }) + '</b> <span class="meta">' + span + '</span><br>' + esc(txt) + '</li>';
+    });
+    // headline: the key window first, then the most notable other period
+    var key = ev.highlight && ev.highlight[0], head = '';
+    if (key) {
+      var kh = H.filter(function (h) { return h.s >= key.start && h.s <= key.end; }), kts = kh.map(function (h) { return h.t; });
+      var ker = ensRain(U, key.start, key.end);
+      if (kh.length) head = fmt(key.start, { weekday: 'long' }) + ' ' + hourSpan(key.start, key.end) + ': ' + tempPhrase(Math.min.apply(null, kts), Math.max.apply(null, kts)) +
+        ', ' + (ker ? (chanceWords(ker.chance, 61) ? Math.round(ker.chance * 100) + '% chance of rain' : 'likely dry (' + Math.round(ker.chance * 100) + '% chance of rain)') : 'rain chance unavailable') + '.';
+    }
+    var other = parts.filter(function (p) { return p.pop >= 0.55 && !(key && p.from < key.end && p.to > key.start); }).sort(function (a, b) { return b.pop - a.pop; })[0];
+    if (other) head += (head ? ' ' : '') + chanceWords(other.pop, other.code >= 51 ? other.code : 61) + ' ' + fmt(other.day + 'T12:00', { weekday: 'long' }) + ' ' + other.label.toLowerCase() + ' (' + Math.round(other.pop * 100) + '%).';
+    if (!head) head = texts[0] || '';
+    var c = U.conf;
+    var h = (hz.length ? '<ul class="hazards">' + hz.map(function (x) { return '<li class="' + x.level + '"><b>' + esc(x.title) + '</b> ' + esc(x.text) + '</li>'; }).join('') + '</ul>' : '') +
+      '<p class="headline">' + esc(head) + '</p>' +
+      (lines.length > 1 || key ? '<ul class="daylines">' + lines.join('') + '</ul>' : '') +
+      (c ? '<p class="small"><b>Forecast confidence: ' + c.level.toLowerCase() + '.</b> ' + esc(c.plain) + '.</p>' : '') +
+      '<p class="small" id="b-normal" hidden></p>';
+    $('#s-brief').hidden = false;
+    $('#b-issued').textContent = 'Updated ' + fmt(f.today, { weekday: 'short', hour: 'numeric', minute: '2-digit' }) + ' · refreshes with each model run';
     $('#b-body').innerHTML = h;
+    if (ev.briefing) renderBrief(ev.briefing, $('#b-body'));
+  }
+
+  // ---------- hazards ----------
+  function hazards(ev, H, parts, U) {
+    var hs = H.filter(function (h) { return h.s >= ev.start && h.s <= ev.end; }), out = [];
+    if (!hs.length) return out;
+    var when = function (h) { return fmt(h.s, { weekday: 'long' }) + ' ' + hourWord(h.s).toLowerCase().replace('midnight', 'at midnight').replace('noon', 'at noon').replace(/^(\d)/, 'around $1'); };
+    var top = function (f) { return hs.reduce(function (a, h) { return f(h) > f(a) ? h : a; }); };
+    var hot = top(function (h) { return h.at || -99; }), cold = top(function (h) { return -(h.at == null ? 99 : h.at); });
+    if (hot.at >= 103) out.push({ level: 'warn', title: 'Dangerous heat.', text: 'Feels like ' + r0(hot.at) + '° ' + when(hot) + '. Limit time in the sun, drink water often and know the signs of heat illness.' });
+    else if (hot.at >= 90) out.push({ level: 'watch', title: 'Heat.', text: 'Feels like up to ' + r0(hot.at) + '° ' + when(hot) + '. Plan water and shade.' });
+    if (cold.at <= 0) out.push({ level: 'warn', title: 'Dangerous wind chill.', text: 'Feels like ' + r0(cold.at) + '° ' + when(cold) + '. Frostbite is possible within 30 minutes on exposed skin.' });
+    else if (cold.at <= 20) out.push({ level: 'watch', title: 'Wind chill.', text: 'Feels like ' + r0(cold.at) + '° ' + when(cold) + '. Cover exposed skin.' });
+    var g = top(function (h) { return h.gust || 0; });
+    if (g.gust >= 40) out.push({ level: 'warn', title: 'Strong wind.', text: 'Gusts near ' + r0(g.gust) + ' mph ' + when(g) + '. Tents, canopies and loose items are at risk.' });
+    else if (g.gust >= 30) out.push({ level: 'watch', title: 'Gusty wind.', text: 'Gusts to ' + r0(g.gust) + ' mph ' + when(g) + '. Secure tents, canopies and loose items.' });
+    var heavy = null;
+    hs.forEach(function (h) { var b = block3(h.s), er = ensRain(U, b[0], b[1]); if (er && er.hi >= 0.5 && (!heavy || er.hi > heavy.er.hi)) heavy = { h: h, er: er }; });
+    if (heavy) out.push({ level: 'watch', title: 'Heavy rain possible.', text: 'The wettest forecasts show ' + inch(heavy.er.hi) + ' in or more in 3 hours ' + when(heavy.h) + '. Expect ponding on roads and grass.' });
+    var tst = hs.filter(function (h) { return h.code >= 95 || (h.cape >= 800 && h.pop >= 0.3); });
+    if (tst.length) out.push({ level: 'watch', title: 'Thunderstorms possible.', text: when(tst[0]).replace(/^./, function (c) { return c.toUpperCase(); }) + '. Head indoors when thunder is heard.' });
+    var ice = hs.filter(function (h) { return [56, 57, 66, 67].indexOf(h.code) >= 0; });
+    if (ice.length) out.push({ level: 'warn', title: 'Freezing rain possible.', text: when(ice[0]).replace(/^./, function (c) { return c.toUpperCase(); }) + '. Roads, steps and walkways may be icy.' });
+    var snow = sum(hs.map(function (h) { return h.snow; }));
+    if (snow >= 0.5) out.push({ level: snow >= 3 ? 'warn' : 'watch', title: 'Snow.', text: 'About ' + snow.toFixed(1) + ' in in the middle forecast. Allow extra travel time.' });
+    var uv = top(function (h) { return h.uv || 0; });
+    if (uv.uv >= 8) out.push({ level: 'watch', title: 'Very high UV.', text: 'UV index ' + r0(uv.uv) + ' ' + when(uv) + '. Sunburn in under 20 minutes; sunscreen and shade.' });
+    return out;
+  }
+
+  // Active NWS watches, warnings and advisories for the point (US only). They come first.
+  function nwsAlerts(ev, f) {
+    if (!inUS(ev.lat, ev.lon)) return;
+    getJSON('https://api.weather.gov/alerts/active?point=' + ev.lat.toFixed(4) + ',' + ev.lon.toFixed(4), 1).then(function (j) {
+      var startUtc = D(ev.start).getTime() - (f.det ? f.det.utc_offset_seconds : 0) * 1000;
+      var a = (j.features || []).map(function (x) { return x.properties; }).filter(function (p) { var e = Date.parse(p.ends || p.expires); return !e || e > startUtc; });
+      if (!a.length) return;
+      $('#alerts').innerHTML = a.slice(0, 3).map(function (p) {
+        return '<a class="alert ' + (/Warning/.test(p.event) ? 'warn' : 'watch') + '" href="https://forecast.weather.gov/MapClick.php?lat=' + ev.lat.toFixed(4) + '&lon=' + ev.lon.toFixed(4) + '" target="_blank" rel="noopener"><b>' + esc(p.event) + '</b> ' + esc(p.headline || '') + '</a>';
+      }).join('');
+      $('#alerts').hidden = false;
+    }).catch(function () {});
   }
 
   function renderGlance(ev, H, parts, U) {
@@ -411,24 +548,26 @@
     var groups = [];
     parts.forEach(function (p) {
       var g = groups[groups.length - 1];
-      if (g && g.title === p.wear.title && g.items.join() === p.wear.items.join()) { g.parts.push(p); g.notes = g.notes.concat(p.wear.notes); }
-      else groups.push({ title: p.wear.title, wear: p.wear.wear, items: p.wear.items, notes: p.wear.notes.slice(), comfort: p.wear.comfort, parts: [p] });
+      if (g && g.title === p.wear.title && g.parts[g.parts.length - 1].day === p.day) { g.parts.push(p); g.notes = g.notes.concat(p.wear.notes); p.wear.items.forEach(function (x) { if (g.items.indexOf(x) < 0) g.items.push(x); }); }
+      else groups.push({ title: p.wear.title, wear: p.wear.wear, items: p.wear.items.slice(), notes: p.wear.notes.slice(), comfort: p.wear.comfort, parts: [p] });
     });
-    $('#wear').innerHTML = groups.map(function (g) {
+    var allNotes = [];
+    var rows = groups.map(function (g) {
       var a = g.parts[0], b = g.parts[g.parts.length - 1];
       var when = fmt(a.day + 'T12:00', { weekday: 'short' }) + ' ' + a.label.toLowerCase() + (g.parts.length > 1 ? ' – ' + (b.day !== a.day ? fmt(b.day + 'T12:00', { weekday: 'short' }) + ' ' : '') + b.label.toLowerCase() : '');
-      // one note per kind: "Chance of rain (44%)" and "(37%)" become the higher one
-      var seen = {}, order = [];
-      g.notes.forEach(function (n) { var k = n.replace(/-?\d+(\.\d+)?/g, '#'), v = parseFloat((n.match(/-?\d+(\.\d+)?/) || [0])[0]);
-        if (!(k in seen)) { order.push(k); seen[k] = { n: n, v: v }; } else if (v > seen[k].v) seen[k] = { n: n, v: v }; });
-      var notes = order.map(function (k) { return seen[k].n; });
+      allNotes = allNotes.concat(g.notes);
       var fl = Math.min.apply(null, g.parts.map(function (p) { return p.wear.fLo; })), fh = Math.max.apply(null, g.parts.map(function (p) { return p.wear.fHi; }));
-      return '<div class="wearcard' + (g.parts.some(function (p) { return p.highlight; }) ? ' hl' : '') + '">' +
-        '<div class="whead"><span class="eyebrow">' + esc(when) + '</span><span class="feel num">feels ' + r0(fl) + (Math.round(fh) !== Math.round(fl) ? '–' + r0(fh) : '') + '°</span></div>' +
-        '<p class="wtitle"><b>' + esc(g.title) + '.</b> ' + esc(g.wear) + '.</p>' +
-        '<div class="items">' + g.items.map(function (x) { return '<span>' + esc(x) + '</span>'; }).join('') + '</div>' +
-        (notes.length ? '<ul>' + notes.map(function (n) { return '<li>' + esc(n) + '</li>'; }).join('') + '</ul>' : '') + '</div>';
-    }).join('');
+      return '<div class="wrow' + (g.parts.some(function (p) { return p.highlight; }) ? ' hl' : '') + '">' +
+        '<div class="wwhen"><span class="eyebrow">' + esc(when) + '</span><span class="feel num">feels ' + r0(fl) + (Math.round(fh) !== Math.round(fl) ? '–' + r0(fh) : '') + '°</span></div>' +
+        '<div class="wwhat"><b>' + esc(g.title) + '.</b> ' + esc(g.items.join(', ')) + '</div></div>';
+    });
+    // one note per kind across the event: "Chance of rain (44%)" and "(37%)" become the higher one
+    var seen = {}, order = [];
+    allNotes.forEach(function (n) { var k = n.replace(/-?\d+(\.\d+)?/g, '#'), v = parseFloat((n.match(/-?\d+(\.\d+)?/) || [0])[0]);
+      if (/^Feels like .* over these hours|^It turns colder afterward/.test(n)) return;
+      if (!(k in seen)) { order.push(k); seen[k] = { n: n, v: v }; } else if (v > seen[k].v) seen[k] = { n: n, v: v }; });
+    $('#wear').innerHTML = '<div class="wrows">' + rows.join('') + '</div>' +
+      (order.length ? '<ul class="wnotes">' + order.map(function (k) { return '<li>' + esc(seen[k].n.replace(/ \(\d+%( chance)?\)/, '')) + '</li>'; }).join('') + '</ul>' : '');
   }
 
   // ---------- charts (SVG, shared crosshair) ----------
@@ -647,7 +786,7 @@
   var syn;
   function renderMap(ev, U) {
     var note = $('#mapnote');
-    if (!ev.saved) { note.hidden = false; note.textContent = 'The rain and snow map is built for saved briefings.'; $('.mapctl').hidden = true; $('#mtabs').hidden = true; return; }
+    if (!ev.saved) { $('#s-map').hidden = true; syncTabs(); return; }
     var docs = {}, cur = 'blend', layer = 'sfc', sl = $('#mslider'), timer = null;
     var utcOf = function (v) { return Date.parse(v.replace('Z', ':00Z')); };
     var localOf = function (v) { return new Date(utcOf(v) + U.off * 1000).toISOString().slice(0, 16); };
@@ -658,7 +797,7 @@
     var meta = function () {
       var d = docs[cur], c = d.cycle ? d.cycle.slice(5, 10).replace('-', '/') + ' ' + d.cycle.slice(11) : '';
       $('#map-meta').textContent = cur === 'blend' && !d.legacy
-        ? 'Most likely rain and snow from ' + d.members + ' forecast runs · each frame is the 6 hours ending at the time shown'
+        ? 'Blend of ' + d.members + ' forecast runs, NOAA, ECMWF and ECMWF AI weighted equally · each frame is the 6 hours ending at the time shown'
         : d.name + ' run of ' + c + ' · each frame is the 6 hours ending at the time shown';
       $('#maplegend').innerHTML = Synoptic.legend(layer, cur === 'blend' && !d.legacy);
     };
@@ -687,8 +826,8 @@
     };
     get('blend').then(function (doc) {
       syn = new Synoptic($('#map'), { lat: ev.lat, lon: ev.lon });
-      $('#mtabs').innerHTML = (doc.models || [{ id: 'blend', name: 'Most likely' }]).map(function (m) {
-        return '<button type="button" data-m="' + m.id + '" aria-pressed="' + (m.id === 'blend') + '">' + esc(m.name) + '</button>';
+      $('#mtabs').innerHTML = (doc.models || [{ id: 'blend', name: 'Blend' }]).map(function (m) {
+        return '<button type="button" data-m="' + m.id + '" aria-pressed="' + (m.id === 'blend') + '">' + esc(m.id === 'blend' && !doc.legacy ? 'Blend' : m.name) + '</button>';
       }).join('');
       var key = (ev.highlight && ev.highlight[0]) ? ev.highlight[0].start : ev.start;
       var keyUtc = D(key).getTime() - U.off * 1000, best = 0;
@@ -729,22 +868,22 @@
     while (d <= ev.end.slice(0, 10) && days.length < 14) { days.push(d); d = addH(d + 'T00:00', 24).slice(0, 10); }
     var loc = function (ms) { return ms == null ? '–' : new Date(ms + off * 1000).toISOString().slice(0, 16); };
     var tm = function (ms) { if (ms == null) return '–'; var s = loc(ms); return fmt(s, { hour: 'numeric', minute: '2-digit' }).replace(' ', ' '); };
-    $('#sun').innerHTML = days.map(function (day) {
+    var S = days.map(function (day) {
       var start = Date.parse(day + 'T00:00:00Z') - off * 1000;
-      var s = Wear.sunDay(start, ev.lat, ev.lon, [-6, -0.833, -4, 6]);
-      var len = s.set[-0.833] && s.rise[-0.833] ? (s.set[-0.833] - s.rise[-0.833]) / 3600000 : null;
-      // arc: sun path from rise to set
-      var arc = sunArc(s, start);
-      return '<div class="sunday"><p class="eyebrow">' + fmt(day + 'T12:00', { weekday: 'long', month: 'short', day: 'numeric' }) + '</p>' + arc +
-        '<dl>' +
-        '<div><dt>Sunrise</dt><dd class="num">' + tm(s.rise[-0.833]) + '</dd></div>' +
-        '<div><dt>Sunset</dt><dd class="num">' + tm(s.set[-0.833]) + '</dd></div>' +
-        '<div><dt>Golden hour</dt><dd class="num">' + tm(s.rise[-4]) + '–' + tm(s.rise[6]) + '<br>' + tm(s.set[6]) + '–' + tm(s.set[-4]) + '</dd></div>' +
-        '<div><dt>First / last light</dt><dd class="num">' + tm(s.rise[-6]) + ' / ' + tm(s.set[-6]) + '</dd></div>' +
-        '<div><dt>Highest sun</dt><dd class="num">' + Math.round(s.noon.el) + '° at ' + tm(s.noon.t) + '</dd></div>' +
-        '<div><dt>Daylight</dt><dd class="num">' + (len ? Math.floor(len) + 'h ' + Math.round((len % 1) * 60) + 'm' : '–') + '</dd></div>' +
-        '</dl></div>';
-    }).join('');
+      var x = Wear.sunDay(start, ev.lat, ev.lon, [-6, -0.833, -4, 6]);
+      x.len = x.set[-0.833] && x.rise[-0.833] ? (x.set[-0.833] - x.rise[-0.833]) / 3600000 : null;
+      return x;
+    });
+    var row = function (k, f) { return '<tr><th>' + k + '</th>' + S.map(function (x) { return '<td class="num">' + f(x) + '</td>'; }).join('') + '</tr>'; };
+    $('#sun').innerHTML = '<div class="tablewrap"><table class="suntable"><thead><tr><th></th>' + days.map(function (d) { return '<th>' + fmt(d + 'T12:00', { weekday: 'short', month: 'short', day: 'numeric' }) + '</th>'; }).join('') + '</tr></thead><tbody>' +
+      row('First light', function (x) { return tm(x.rise[-6]); }) +
+      row('Sunrise', function (x) { return '<b>' + tm(x.rise[-0.833]) + '</b>'; }) +
+      row('Highest sun', function (x) { return Math.round(x.noon.el) + '° at ' + tm(x.noon.t); }) +
+      row('Golden hour', function (x) { return tm(x.set[6]) + '–' + tm(x.set[-4]); }) +
+      row('Sunset', function (x) { return '<b>' + tm(x.set[-0.833]) + '</b>'; }) +
+      row('Last light', function (x) { return tm(x.set[-6]); }) +
+      row('Daylight', function (x) { return x.len ? Math.floor(x.len) + 'h ' + Math.round((x.len % 1) * 60) + 'm' : '–'; }) +
+      '</tbody></table></div>';
   }
   function sunArc(s, start) {
     var W = 240, H = 70;
@@ -781,6 +920,8 @@
       hi = hi.filter(function (x) { return x != null; }); lo = lo.filter(function (x) { return x != null; }); pr = pr.filter(function (x) { return x != null; });
       if (!hi.length) return;
       $('#s-typical').hidden = false; syncTabs();
+      var bn = $('#b-normal');
+      if (bn) { bn.hidden = false; bn.innerHTML = '<b>Normal for these dates:</b> high ' + r0(mean(hi)) + '°, low ' + r0(mean(lo)) + '°, rain or snow on ' + Math.round(100 * pr.filter(function (x) { return x >= 0.01; }).length / pr.length) + '% of days.'; }
       $('#t-meta').textContent = 'ERA5, ' + years[years.length - 1] + '–' + years[0] + ', two weeks around the event';
       $('#typical').innerHTML = '<dl class="typ">' +
         '<div><dt>Average high</dt><dd class="num">' + r0(mean(hi)) + '°</dd><dd class="sub">range ' + r0(pct(hi, 0.05)) + '–' + r0(pct(hi, 0.95)) + '°</dd></div>' +
@@ -816,9 +957,10 @@
   route().then(function (ev) {
     if (!ev) return planner();
     arcCache.ev = ev;
-    $('#briefing').hidden = false;
+    header(ev);
     return fetchAll(ev).then(function (f) { render(ev, f); });
   }).catch(function (e) {
+    $('#glance').innerHTML = '<div class="glance-far"><b>The forecast could not be loaded.</b> The forecast service may be busy. <a href="">Try again</a></div>';
     status('Could not load the forecast: ' + esc(e.message) + '. <a href="">Try again</a>');
     console.error(e);
   });

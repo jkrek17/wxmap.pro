@@ -94,6 +94,7 @@
             <button class="iconbtn" id="print" type="button" aria-label="Print or save as PDF" title="Print / PDF"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M5 8V3h10v5M5 14H3V8h14v6h-2M6 12h8v5H6z"/></svg></button>
           </div>
         </div>
+        <div class="alerts" id="alerts" hidden></div>
         <div class="glance" id="glance"><div class="skel" style="height:120px"></div></div>
         <div class="chips" id="h-chips"></div>
       </div>
@@ -101,12 +102,11 @@
 
     <nav class="tabs" id="tabs" aria-label="Sections">
       <div class="wrap">
-        <a href="#s-brief">Forecast</a>
-        <a href="#s-map">Rain map</a>
-        <a href="#s-timeline">Hour by hour</a>
+        <a href="#s-brief">Summary</a>
+        <a href="#s-timeline">Hourly</a>
+        <a href="#s-map">Map</a>
         <a href="#s-wear">What to wear</a>
-        <a href="#s-sun">Sunrise &amp; sunset</a>
-        <a href="#s-typical">Typical</a>
+        <a href="#s-sun">Sun</a>
         <a href="#s-details">Details</a>
       </div>
     </nav>
@@ -115,6 +115,17 @@
       <section id="s-brief" class="card brief" hidden>
         <div class="card-head"><h2>Summary</h2><span class="meta" id="b-issued"></span></div>
         <div id="b-body" class="prose"></div>
+      </section>
+
+      <section id="s-timeline" class="card">
+        <div class="card-head"><h2>Hour by hour</h2><span class="meta">Tap a block for the details</span></div>
+        <div class="parts" id="parts"><div class="skel" style="height:180px"></div></div>
+        <label class="switch"><input type="checkbox" id="showmodels"><span></span>Show each forecast model</label>
+        <div class="charts">
+          <figure class="chart" id="c-temp"><figcaption><b>Temperature</b> <span class="legend" id="l-temp"></span></figcaption><div class="plot"></div></figure>
+          <figure class="chart" id="c-pcp"><figcaption><b>Rain and snow</b> <span class="legend" id="l-pcp"></span></figcaption><div class="plot"></div></figure>
+          <figure class="chart" id="c-wind"><figcaption><b>Wind and gusts</b> <span class="legend" id="l-wind"></span></figcaption><div class="plot"></div></figure>
+        </div>
       </section>
 
       <section id="s-map" class="card">
@@ -136,36 +147,24 @@
         </div>
       </section>
 
-      <section id="s-timeline" class="card">
-        <div class="card-head"><h2>Hour by hour</h2><span class="meta">Tap a block for the details</span></div>
-        <div class="parts" id="parts"><div class="skel" style="height:180px"></div></div>
-        <label class="switch"><input type="checkbox" id="showmodels"><span></span>Show each forecast model</label>
-        <div class="charts">
-          <figure class="chart" id="c-temp"><figcaption><b>Temperature</b> <span class="legend" id="l-temp"></span></figcaption><div class="plot"></div></figure>
-          <figure class="chart" id="c-pcp"><figcaption><b>Rain and snow</b> <span class="legend" id="l-pcp"></span></figcaption><div class="plot"></div></figure>
-          <figure class="chart" id="c-wind"><figcaption><b>Wind and gusts</b> <span class="legend" id="l-wind"></span></figcaption><div class="plot"></div></figure>
-        </div>
-      </section>
-
       <section id="s-wear" class="card">
-        <div class="card-head"><h2>What to wear</h2><span class="meta">From how it will feel: sun angle, dew point, wind and rain</span></div>
+        <div class="card-head"><h2>What to wear</h2><span class="meta">Dressed for how it feels in the shade, with wind and humidity</span></div>
         <div id="wear" class="wear"></div>
       </section>
 
 
       <section id="s-sun" class="card">
-        <div class="card-head"><h2>Sun and light</h2><span class="meta">Sunrise, sunset, golden hour and how high the sun gets</span></div>
+        <div class="card-head"><h2>Sun and light</h2><span class="meta">Local times</span></div>
         <div class="sun" id="sun"></div>
       </section>
 
-      <section class="card typical" id="s-typical" hidden>
+      <details class="card nerd" id="s-details">
+        <summary><span><h2>Forecast details</h2><span class="meta">Normals, each model side by side, and the ensembles</span></span><svg class="chev" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 8l5 5 5-5"/></svg></summary>
+        <div class="nerd-body">
+<div class="sub typical" id="s-typical" hidden>
         <div class="card-head"><h2>Typical for these dates</h2><span class="meta" id="t-meta"></span></div>
         <div id="typical"></div>
-      </section>
-
-      <details class="card nerd" id="s-details">
-        <summary><span><h2>Forecast details</h2><span class="meta">Each model side by side, and the ensembles</span></span><svg class="chev" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 8l5 5 5-5"/></svg></summary>
-        <div class="nerd-body">
+      </div>
         <div id="s-models" class="sub">
           <div class="card-head"><h2>Model by model</h2><span class="meta" id="m-meta"></span></div>
           <div class="confidence" id="confidence"></div>
@@ -184,7 +183,7 @@
 <footer class="sitefoot">
   <div class="wrap">
     <span>Point forecasts: <a href="https://open-meteo.com/">Open-Meteo</a> (CC BY 4.0) from NOAA GFS, GEFS, NBM, HRRR; ECMWF IFS, ENS, AIFS; DWD ICON; ECCC GEM. Maps: NOAA GFS and GEFS, ECMWF IFS, ENS, AIFS and AIFS ENS via AWS Open Data.</span>
-    <span>Not an official forecast. <a href="../">wxmap.pro</a></span>
+    <span>Not an official forecast; for decisions, check the <a href="https://www.weather.gov/" rel="noopener">National Weather Service</a>. No tracking or analytics. <a href="../">wxmap.pro</a></span>
   </div>
 </footer>
 

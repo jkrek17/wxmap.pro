@@ -338,3 +338,42 @@ body.sheet-open { overflow: hidden; }
 .mtabs { margin: 0 0 12px; display: flex; flex-wrap: wrap; }
 .mtabs:empty { display: none; }
 .maplegend .fade i { width: 22px; height: 10px; border-radius: 2px; background: linear-gradient(90deg, rgba(46,154,58,.18), rgba(46,154,58,.9)); }
+
+/* ---- tier 2: summary, hazards, alerts, compact wear and sun ---- */
+.alerts { display: grid; gap: 8px; margin-bottom: 12px; }
+.alert { display: block; padding: 10px 12px; border-radius: 10px; font-size: .9063rem; line-height: 1.4; color: var(--text); text-decoration: none; border: 1px solid; }
+.alert b { display: block; }
+.alert.warn { background: color-mix(in srgb, var(--err) 12%, var(--surface)); border-color: color-mix(in srgb, var(--err) 45%, transparent); }
+.alert.watch { background: color-mix(in srgb, var(--warn) 14%, var(--surface)); border-color: color-mix(in srgb, var(--warn) 45%, transparent); }
+.hazards { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.hazards li { padding: 9px 12px; border-radius: 10px; font-size: .9375rem; color: var(--text-2); border-left: 4px solid; }
+.hazards li b { color: var(--text); }
+.hazards li.warn { background: color-mix(in srgb, var(--err) 10%, transparent); border-color: var(--err); }
+.hazards li.watch { background: color-mix(in srgb, var(--warn) 12%, transparent); border-color: var(--warn); }
+.daylines { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.daylines li { color: var(--text-2); line-height: 1.5; }
+.daylines li b { color: var(--text); }
+.daylines .meta { font-size: .75rem; margin-left: 4px; }
+.prose .small { font-size: .9063rem; }
+.prose .muted { color: var(--text-3); }
+.fnote { border-top: 1px solid var(--border); padding-top: 10px; }
+.fnote summary { cursor: pointer; color: var(--accent); font-size: .9375rem; }
+.fnote summary .meta { color: var(--text-3); font-size: .75rem; margin-left: 4px; }
+.fnote h4 { margin: 12px 0 2px; font-size: .9375rem; }
+.fnote p { margin-top: 8px; color: var(--text-2); }
+.wrows { display: grid; border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+.wrow { display: grid; grid-template-columns: minmax(0, 10.5rem) minmax(0, 1fr); gap: 12px; padding: 10px 12px; background: var(--surface); }
+.wrow + .wrow { border-top: 1px solid var(--border); }
+.wrow.hl { box-shadow: inset 3px 0 0 var(--accent); }
+.wwhen { display: grid; gap: 2px; }
+.wwhen .feel { font-size: .8125rem; color: var(--text-3); }
+.wwhat { color: var(--text-2); font-size: .9375rem; line-height: 1.45; }
+.wwhat b { color: var(--text); }
+.wnotes { margin: 12px 0 0; padding-left: 18px; display: grid; gap: 6px; color: var(--text-2); font-size: .9375rem; }
+.sun { display: block; }
+.suntable { width: 100%; border-collapse: collapse; font-size: .9063rem; }
+.suntable th, .suntable td { padding: 7px 8px; text-align: left; border-bottom: 1px solid var(--border); white-space: nowrap; }
+.suntable thead th { font: 500 .6875rem/1.2 var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--text-3); }
+.suntable tbody th { font-weight: 500; color: var(--text-3); }
+.suntable b { color: var(--text); font-weight: 600; }
+@media (max-width: 420px) { .wrow { grid-template-columns: 1fr; gap: 4px; } }
