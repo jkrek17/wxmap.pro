@@ -5,6 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Event Forecast · wxmap.pro</title>
 <meta name="description" content="Event weather forecasts: hour-by-hour conditions, chance of rain, what to wear, sunrise and sunset, blended from the major forecast models and ensembles.">
+<link rel="canonical" href="https://wxmap.pro/event/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="wxmap.pro">
+<meta property="og:title" content="Event weather forecast">
+<meta property="og:description" content="Hour-by-hour conditions, chance of rain, hazards and what to wear for any place and time, blended from the major forecast models and ensembles.">
+<meta property="og:url" content="https://wxmap.pro/event/">
+<meta name="twitter:card" content="summary">
 <meta name="theme-color" content="#f4f6f8" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#08121d" media="(prefers-color-scheme: dark)">
 <!-- Saved events live in events/<slug>.json; the GFS maps for them in data/<slug>/synoptic.json
@@ -54,7 +61,7 @@
       <label class="field">
         <span>Where</span>
         <div class="search">
-          <input id="place" type="text" placeholder="City, venue town or ZIP" required aria-autocomplete="list" aria-controls="placelist">
+          <input id="place" type="text" placeholder="City, venue town or ZIP" required role="combobox" aria-autocomplete="list" aria-controls="placelist" aria-expanded="false" autocomplete="off">
           <ul id="placelist" class="suggest" role="listbox" hidden></ul>
         </div>
       </label>
@@ -130,14 +137,14 @@
 
       <section id="s-map" class="card">
         <div class="card-head"><h2>Rain and snow map</h2><span class="meta" id="map-meta"></span></div>
-        <div class="seg mtabs" id="mtabs" role="tablist" aria-label="Forecast"></div>
+        <div class="seg mtabs" id="mtabs" role="group" aria-label="Forecast model"></div>
         <div class="mapbox">
-          <canvas id="map" aria-label="Map of sea-level pressure and precipitation around the event"></canvas>
+          <canvas id="map" role="img" aria-label="Map of rain, snow and sea-level pressure around the event; the hour-by-hour section gives the forecast for the location as text"></canvas>
           <div class="maplegend" id="maplegend"></div>
           <p class="mapnote" id="mapnote" hidden></p>
         </div>
         <div class="mapctl">
-          <button class="iconbtn" id="mplay" type="button" aria-label="Play"><svg viewBox="0 0 20 20" fill="currentColor"><path d="M6 4l10 6-10 6z"/></svg></button>
+          <button class="iconbtn" id="mplay" type="button" aria-label="Play" aria-pressed="false"><svg viewBox="0 0 20 20" fill="currentColor"><path d="M6 4l10 6-10 6z"/></svg></button>
           <input type="range" id="mslider" min="0" max="0" value="0" aria-label="Map time">
           <span class="num" id="mtime"></span>
         </div>
@@ -177,13 +184,14 @@
     </div>
   </article>
 
-  <p class="status wrap" id="status" hidden></p>
+  <p class="status wrap" id="status" role="status" hidden></p>
+  <noscript><p class="status wrap">This forecast page needs JavaScript.</p></noscript>
 </main>
 
 <footer class="sitefoot">
   <div class="wrap">
     <span>Point forecasts: <a href="https://open-meteo.com/">Open-Meteo</a> (CC BY 4.0) from NOAA GFS, GEFS, NBM, HRRR; ECMWF IFS, ENS, AIFS; DWD ICON; ECCC GEM. Maps: NOAA GFS and GEFS, ECMWF IFS, ENS, AIFS and AIFS ENS via AWS Open Data.</span>
-    <span>Not an official forecast; for decisions, check the <a href="https://www.weather.gov/" rel="noopener">National Weather Service</a>. No tracking or analytics. <a href="../">wxmap.pro</a></span>
+    <span>Not an official forecast; for decisions, check the <a href="https://www.weather.gov/" rel="noopener">National Weather Service</a>. No tracking or analytics; the place and dates are sent to Open-Meteo (and the NWS for US alerts) to fetch the forecast. <a href="../">wxmap.pro</a></span>
   </div>
 </footer>
 
@@ -194,13 +202,13 @@
     <div id="sheet-body"></div>
   </div>
 </div>
-<div class="toast" id="toast" hidden></div>
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/3.0.2/topojson.min.js"></script>
-<script src="wear.js"></script>
-<script src="icons.js"></script>
-<script src="synoptic.js"></script>
-<script src="event.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js" integrity="sha384-CjloA8y00+1SDAUkjs099PVfnY2KmDC2BZnws9kh8D/lX1s46w6EPhpXdqMfjK6i" crossorigin="anonymous" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/3.0.2/topojson.min.js" integrity="sha384-9dCJK6nh7skY14HrcvlLYlFga9/MehJjL9ONWRflmiXNRuf8p2jiF4Y5PR881PTq" crossorigin="anonymous" defer></script>
+<script src="wear.js" defer></script>
+<script src="icons.js" defer></script>
+<script src="synoptic.js" defer></script>
+<script src="event.js" defer></script>
 </body>
 </html>
