@@ -75,6 +75,18 @@
     if (c >= 0.25) return 'Chance of ' + what;
     return null;
   }
+  // UTC offset (seconds) of a time zone at a UTC instant, and the UTC instant of a local
+  // wall time, so times stay right across a daylight-saving change inside the event.
+  var TZ = null, OFF0 = 0;
+  function offAt(ms) {
+    if (!TZ) return OFF0;
+    try {
+      var p = new Intl.DateTimeFormat('en-US', { timeZone: TZ, timeZoneName: 'longOffset' }).formatToParts(new Date(ms)).find(function (x) { return x.type === 'timeZoneName'; }).value;
+      var m = p.match(/([+-])(\d\d):?(\d\d)?/); return m ? (m[1] === '-' ? -1 : 1) * (+m[2] * 3600 + (+m[3] || 0) * 60) : 0;
+    } catch (e) { return OFF0; }
+  }
+  function utcOfLocal(s) { var g = D(s).getTime() - OFF0 * 1000; return D(s).getTime() - offAt(g) * 1000; }
+  function localOfUtc(ms) { return new Date(ms + offAt(ms) * 1000).toISOString().slice(0, 16); }
   function inUS(lat, lon) { return lat > 24 && lat < 50 && lon > -125.5 && lon < -66; }
 
   // ---------- routing ----------
@@ -100,7 +112,17 @@
     var sat = new Date(now); sat.setDate(now.getDate() + ((6 - now.getDay() + 7) % 7 || 7));
     var d = sat.getFullYear() + '-' + pad(sat.getMonth() + 1) + '-' + pad(sat.getDate());
     $('#estart').value = d + 'T15:00'; $('#eend').value = d + 'T22:00';
-    var chosen = null, list = $('#placelist'), input = $('#place'), timer;
+    var chosen = null, list = $('#placelist'), input = $('#place'), timer, active = -1, results = [];
+    var pick = function (i) { var x = results[i]; if (!x) return; chosen = x; input.value = x.name + (x.admin1 ? ', ' + x.admin1 : ''); list.hidden = true; input.setAttribute('aria-expanded', 'false'); input.removeAttribute('aria-activedescendant'); };
+    input.addEventListener('keydown', function (e) {
+      if (list.hidden || !results.length) return;
+      if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+        e.preventDefault(); active = (active + (e.key === 'ArrowDown' ? 1 : -1) + results.length) % results.length;
+        list.querySelectorAll('li[data-i]').forEach(function (li) { li.setAttribute('aria-selected', String(+li.dataset.i === active)); });
+        input.setAttribute('aria-activedescendant', 'place-opt-' + active);
+      } else if (e.key === 'Enter' && active >= 0) { e.preventDefault(); pick(active); }
+      else if (e.key === 'Escape') { list.hidden = true; input.setAttribute('aria-expanded', 'false'); }
+    });
     input.addEventListener('input', function () {
       chosen = null; clearTimeout(timer);
       var v = input.value.trim();
@@ -112,11 +134,10 @@
             return '<li role="option" data-i="' + i + '"><b>' + esc(x.name) + '</b> <span>' + esc([x.admin1, x.country_code].filter(Boolean).join(', ')) + '</span></li>';
           }).join('') || '<li class="none">No match</li>';
           list.hidden = false;
+          active = -1; results = r; input.setAttribute('aria-expanded', 'true');
           list.querySelectorAll('li[data-i]').forEach(function (li) {
-            li.addEventListener('mousedown', function (e) {
-              e.preventDefault(); var x = r[+li.dataset.i]; chosen = x;
-              input.value = x.name + (x.admin1 ? ', ' + x.admin1 : ''); list.hidden = true;
-            });
+            li.id = 'place-opt-' + li.dataset.i;
+            li.addEventListener('mousedown', function (e) { e.preventDefault(); pick(+li.dataset.i); });
           });
         }).catch(function () { list.hidden = true; });
       }, 220);
@@ -184,7 +205,8 @@
     }
     var etime = f.ens ? f.ens.hourly.time : [];
     var win = winIdx(t, ev.start, ev.end);
-    return { t: t, M: M, E: E, etime: etime, win: win, off: f.det.utc_offset_seconds || 0 };
+    OFF0 = f.det.utc_offset_seconds || 0; TZ = f.det.timezone || (ev.tz !== 'auto' ? ev.tz : null);
+    return { t: t, M: M, E: E, etime: etime, win: win, off: OFF0 };
   }
 
   // Open-Meteo precipitation is the total for the hour ending at the time shown, so an hour
@@ -232,7 +254,7 @@
       });
       o.pop = er ? er.chance : (g('precipitation_probability') != null ? g('precipitation_probability') / 100 : null);
       if (o.elo) { o.elo = Math.min.apply(null, o.elo); o.ehi = Math.max.apply(null, o.ehi); }
-      var utc = new Date(D(s).getTime() - U.off * 1000);
+      var utc = new Date(utcOfLocal(s));
       o.elev = Wear.sunElevation(utc, ev.lat, ev.lon); o.az = Wear.sunAzimuth(utc, ev.lat, ev.lon);
       o.night = o.elev < -0.83;
       out.push(o);
@@ -431,7 +453,8 @@
       '<p class="headline">' + esc(head) + '</p>' +
       (lines.length > 1 || key ? '<ul class="daylines">' + lines.join('') + '</ul>' : '') +
       (c ? '<p class="small"><b>Forecast confidence: ' + c.level.toLowerCase() + '.</b> ' + esc(c.plain) + '.</p>' : '') +
-      '<p class="small" id="b-normal" hidden></p>';
+      '<p class="small" id="b-normal" hidden></p>' +
+      (U.t.length && U.t[U.t.length - 1] < ev.end ? '<p class="small muted">Forecasts currently reach ' + fmt(U.t[U.t.length - 1], { weekday: 'long' }) + ' ' + hourWord(U.t[U.t.length - 1]).toLowerCase() + '; later hours are not covered yet.</p>' : '');
     $('#s-brief').hidden = false;
     $('#b-issued').textContent = 'Updated ' + fmt(f.today, { weekday: 'short', hour: 'numeric', minute: '2-digit' }) + ' · refreshes with each model run';
     $('#b-body').innerHTML = h;
@@ -470,7 +493,7 @@
   function nwsAlerts(ev, f) {
     if (!inUS(ev.lat, ev.lon)) return;
     getJSON('https://api.weather.gov/alerts/active?point=' + ev.lat.toFixed(4) + ',' + ev.lon.toFixed(4), 1).then(function (j) {
-      var startUtc = D(ev.start).getTime() - (f.det ? f.det.utc_offset_seconds : 0) * 1000;
+      var startUtc = utcOfLocal(ev.start);
       var a = (j.features || []).map(function (x) { return x.properties; }).filter(function (p) { var e = Date.parse(p.ends || p.expires); return !e || e > startUtc; });
       if (!a.length) return;
       $('#alerts').innerHTML = a.slice(0, 3).map(function (p) {
@@ -522,7 +545,8 @@
     el.innerHTML = parts.map(function (p, k) {
       var head = p.day !== prevDay ? '<span class="pday">' + fmt(p.day + 'T12:00', { weekday: 'short' }) + '</span>' : '';
       prevDay = p.day;
-      return '<button type="button" class="part' + (p.highlight ? ' hl' : '') + (p.night ? ' night' : '') + '" data-k="' + k + '">' + head +
+      var aria = fmt(p.day + 'T12:00', { weekday: 'long' }) + ' ' + p.label.toLowerCase() + ': ' + WxIcons.words(p.code, p.night) + ', ' + (p.night ? 'low ' + r0(p.lo) + '°, high ' + r0(p.hi) : 'high ' + r0(p.hi) + '°, low ' + r0(p.lo)) + '°, ' + Math.round(p.pop * 100) + '% chance of rain, wind ' + compass(p.dir) + ' ' + r0(p.wind) + ' mph' + (p.gust >= p.wind + 8 ? ', gusts ' + r0(p.gust) : '') + '. Open hourly details.';
+      return '<button type="button" class="part' + (p.highlight ? ' hl' : '') + (p.night ? ' night' : '') + '" data-k="' + k + '" aria-label="' + esc(aria) + '">' + head +
         '<span class="plabel">' + p.label + '</span>' + WxIcons.icon(p.code, p.night) +
         '<span class="ptemp num">' + r0(p.night ? p.lo : p.hi) + '°<small>' + r0(p.night ? p.hi : p.lo) + '°</small></span>' +
         '<span class="ppop num' + (p.pop >= 0.5 ? ' wet' : '') + '"><svg viewBox="0 0 10 12"><path d="M5 0C5 0 0 6 0 8a5 5 0 0 0 10 0C10 6 5 0 5 0z"/></svg>' + Math.round(p.pop * 100) + '%</span>' +
@@ -540,7 +564,14 @@
     var w = p.wear;
     $('#sheet-body').innerHTML = '<div class="tablewrap"><table class="htable"><thead><tr><th></th><th></th><th>Temp</th><th>Feels</th><th>Dew</th><th>Rain<small>3 h</small></th><th>in</th><th>Wind/G</th><th>Cloud</th></tr></thead><tbody>' + rows + '</tbody></table></div>' +
       '<div class="wearcard"><p class="wtitle"><b>' + esc(w.title) + '.</b> ' + esc(w.wear) + '.</p><div class="items">' + w.items.map(function (x) { return '<span>' + esc(x) + '</span>'; }).join('') + '</div><ul>' + w.notes.map(function (n) { return '<li>' + esc(n) + '</li>'; }).join('') + '</ul></div>';
+    openSheet();
+  }
+  var lastFocus = null;
+  function openSheet() {
+    lastFocus = document.activeElement;
     $('#sheet').hidden = false; document.body.classList.add('sheet-open');
+    ['.appbar', '#app', '.sitefoot'].forEach(function (s) { var el = $(s); if (el) el.inert = true; });
+    $('#sheet-close').focus();
   }
 
   function renderWear(ev, parts) {
@@ -680,7 +711,10 @@
       }
     });
     g += '<line class="xhair" id="' + sel.slice(1) + '-x" x1="0" x2="0" y1="' + m.t + '" y2="' + (m.t + ih) + '" visibility="hidden"/>';
-    box.innerHTML = '<svg viewBox="0 0 ' + W + ' ' + Hh + '" width="' + W + '" height="' + Hh + '">' + g + '</svg><div class="tip" hidden></div>';
+    var main = series.filter(function (x) { return x.type !== 'band' && x.v; })[series.filter(function (x) { return x.type !== 'band' && x.v; }).length - 1];
+    var mv = main ? main.v.filter(function (v) { return v != null && isFinite(v); }) : [];
+    var aria = (fig.querySelector('figcaption b') || {}).textContent + ' chart' + (mv.length ? ': ' + main.label.toLowerCase() + ' from ' + (main.axis === 'r' ? inch(Math.min.apply(null, mv)) + ' to ' + inch(Math.max.apply(null, mv)) + ' in' : Math.round(Math.min.apply(null, mv)) + ' to ' + Math.round(Math.max.apply(null, mv)) + (o.unit === ' mph' ? ' mph' : '°')) + ' over the event. The hour-by-hour blocks above give the same numbers as text.' : '');
+    box.innerHTML = '<svg viewBox="0 0 ' + W + ' ' + Hh + '" width="' + W + '" height="' + Hh + '" role="img" aria-label="' + esc(aria) + '">' + g + '</svg><div class="tip" hidden aria-hidden="true"></div>';
     var svgEl = box.querySelector('svg'), tip = box.querySelector('.tip');
     var c = { show: function (i) {
       var line = svgEl.querySelector('.xhair');
@@ -787,12 +821,18 @@
   function renderMap(ev, U) {
     var note = $('#mapnote');
     if (!ev.saved) { $('#s-map').hidden = true; syncTabs(); return; }
+    // the map's data and coastlines are large: load them only when the map comes near the screen
+    if (!renderMap.near && 'IntersectionObserver' in window) {
+      var io = new IntersectionObserver(function (es) { if (es.some(function (e) { return e.isIntersecting; })) { io.disconnect(); renderMap.near = true; renderMap(ev, U); } }, { rootMargin: '600px 0px' });
+      io.observe($('#s-map')); return;
+    }
     var docs = {}, cur = 'blend', layer = 'sfc', sl = $('#mslider'), timer = null;
     var utcOf = function (v) { return Date.parse(v.replace('Z', ':00Z')); };
-    var localOf = function (v) { return new Date(utcOf(v) + U.off * 1000).toISOString().slice(0, 16); };
+    var localOf = function (v) { return localOfUtc(utcOf(v)); };
     var label = function () {
       var d = docs[cur], t = localOf(d.times[+sl.value]);
       $('#mtime').textContent = fmt(t, { weekday: 'short' }) + ' ' + hourWord(t);
+      sl.setAttribute('aria-valuetext', fmt(t, { weekday: 'long' }) + ' ' + hourWord(t));
     };
     var meta = function () {
       var d = docs[cur], c = d.cycle ? d.cycle.slice(5, 10).replace('-', '/') + ' ' + d.cycle.slice(11) : '';
@@ -830,15 +870,16 @@
         return '<button type="button" data-m="' + m.id + '" aria-pressed="' + (m.id === 'blend') + '">' + esc(m.id === 'blend' && !doc.legacy ? 'Blend' : m.name) + '</button>';
       }).join('');
       var key = (ev.highlight && ev.highlight[0]) ? ev.highlight[0].start : ev.start;
-      var keyUtc = D(key).getTime() - U.off * 1000, best = 0;
+      var keyUtc = utcOfLocal(key), best = 0;
       doc.times.forEach(function (t, i) { if (Math.abs(utcOf(t) - keyUtc) < Math.abs(utcOf(doc.times[best]) - keyUtc)) best = i; });
       syn.i = best;
       return syn.load(doc).then(function () {
         sl.max = doc.times.length - 1; sl.value = best; syn.set(best); label(); meta();
         sl.addEventListener('input', function () { syn.set(+sl.value); label(); });
         $('#mplay').addEventListener('click', function () {
-          if (timer) { clearInterval(timer); timer = null; $('#mplay').classList.remove('on'); return; }
-          $('#mplay').classList.add('on');
+          var pb = $('#mplay');
+          if (timer) { clearInterval(timer); timer = null; pb.classList.remove('on'); pb.setAttribute('aria-pressed', 'false'); pb.setAttribute('aria-label', 'Play'); return; }
+          pb.classList.add('on'); pb.setAttribute('aria-pressed', 'true'); pb.setAttribute('aria-label', 'Pause');
           timer = setInterval(function () { var i = (+sl.value + 1) % docs[cur].times.length; sl.value = i; syn.set(i); label(); }, 900);
         });
         document.querySelectorAll('#mtabs button').forEach(function (b) {
@@ -866,10 +907,11 @@
     }
     var days = [], d = ev.start.slice(0, 10);
     while (d <= ev.end.slice(0, 10) && days.length < 14) { days.push(d); d = addH(d + 'T00:00', 24).slice(0, 10); }
-    var loc = function (ms) { return ms == null ? '–' : new Date(ms + off * 1000).toISOString().slice(0, 16); };
+    if (!TZ) { TZ = (f.det && f.det.timezone) || (ev.tz !== 'auto' ? ev.tz : null); OFF0 = off; }
+    var loc = function (ms) { return ms == null ? '–' : localOfUtc(ms); };
     var tm = function (ms) { if (ms == null) return '–'; var s = loc(ms); return fmt(s, { hour: 'numeric', minute: '2-digit' }).replace(' ', ' '); };
     var S = days.map(function (day) {
-      var start = Date.parse(day + 'T00:00:00Z') - off * 1000;
+      var start = utcOfLocal(day + 'T00:00');
       var x = Wear.sunDay(start, ev.lat, ev.lon, [-6, -0.833, -4, 6]);
       x.len = x.set[-0.833] && x.rise[-0.833] ? (x.set[-0.833] - x.rise[-0.833]) / 3600000 : null;
       return x;
@@ -912,9 +954,12 @@
       var s = yr + '-' + mmdd(a), e = (a.getUTCFullYear() < b.getUTCFullYear() ? yr + 1 : yr) + '-' + mmdd(b);
       return getJSON(q(OMA, { latitude: ev.lat, longitude: ev.lon, start_date: s, end_date: e, daily: 'temperature_2m_max,temperature_2m_min,precipitation_sum', temperature_unit: 'fahrenheit', precipitation_unit: 'inch', timezone: ev.tz }), 2).catch(function () { return null; });
     };
-    var rs = [], k = 0;
+    var ck = 'typ:' + ev.lat.toFixed(2) + ',' + ev.lon.toFixed(2) + ':' + mmdd(mid) + ':' + y0, cached = null;
+    try { cached = JSON.parse(localStorage.getItem(ck) || 'null'); } catch (e) {}
+    var rs = cached || [], k = cached ? years.length : 0;
     var lane = function () { if (k >= years.length) return Promise.resolve(); var yr = years[k++]; return one(yr).then(function (r) { rs.push(r); return lane(); }); };
     Promise.all([lane(), lane()]).then(function () {
+      if (!cached && rs.filter(Boolean).length === years.length) try { localStorage.setItem(ck, JSON.stringify(rs.map(function (r) { return { daily: r.daily }; }))); } catch (e) {}
       var hi = [], lo = [], pr = [];
       rs.forEach(function (r) { if (!r || !r.daily) return; hi = hi.concat(r.daily.temperature_2m_max); lo = lo.concat(r.daily.temperature_2m_min); pr = pr.concat(r.daily.precipitation_sum); });
       hi = hi.filter(function (x) { return x != null; }); lo = lo.filter(function (x) { return x != null; }); pr = pr.filter(function (x) { return x != null; });
@@ -951,7 +996,20 @@
       links.forEach(function (a) { var s = document.querySelector(a.getAttribute('href')); if (s) io.observe(s); });
     }
   }
-  function closeSheet() { $('#sheet').hidden = true; document.body.classList.remove('sheet-open'); }
+  function closeSheet() {
+    if ($('#sheet').hidden) return;
+    $('#sheet').hidden = true; document.body.classList.remove('sheet-open');
+    ['.appbar', '#app', '.sitefoot'].forEach(function (s) { var el = $(s); if (el) el.inert = false; });
+    if (lastFocus && lastFocus.focus) lastFocus.focus();
+  }
+  // keep Tab inside the open sheet
+  document.addEventListener('keydown', function (e) {
+    if (e.key !== 'Tab' || $('#sheet').hidden) return;
+    var f = Array.prototype.filter.call($('#sheet').querySelectorAll('button, [href], [tabindex]:not([tabindex="-1"])'), function (x) { return !x.disabled; });
+    if (!f.length) return;
+    if (e.shiftKey && document.activeElement === f[0]) { e.preventDefault(); f[f.length - 1].focus(); }
+    else if (!e.shiftKey && document.activeElement === f[f.length - 1]) { e.preventDefault(); f[0].focus(); }
+  });
 
   wire();
   route().then(function (ev) {

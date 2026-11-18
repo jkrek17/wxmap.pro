@@ -25,6 +25,7 @@
 }
 
 html { scroll-behavior: smooth; scroll-padding-top: 120px; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
 body { min-height: 100vh; display: flex; flex-direction: column; }
 main { flex: 1; }
 body.sheet-open { overflow: hidden; }
@@ -377,3 +378,15 @@ body.sheet-open { overflow: hidden; }
 .suntable tbody th { font-weight: 500; color: var(--text-3); }
 .suntable b { color: var(--text); font-weight: 600; }
 @media (max-width: 420px) { .wrow { grid-template-columns: 1fr; gap: 4px; } }
+
+/* ---- tier 3: contrast and touch targets ---- */
+:root:not([data-theme="dark"]) { --text-3: #56677a; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --text-3: #7d90a4; } }
+.suggest li[aria-selected="true"] { background: var(--surface-2); }
+@media (pointer: coarse) {
+  .iconbtn { width: 44px; height: 44px; }
+  .seg button, .mtabs button { min-height: 44px; }
+  .sitefoot a { display: inline-block; padding: 12px 0; }
+  details > summary { min-height: 44px; display: flex; align-items: center; }
+  input[type=range] { height: 44px; }
+}
