@@ -10,34 +10,34 @@
   "kind": "stadium",
   "highlight": [
     {
-      "label": "Game, 1 PM kickoff",
+      "label": "1 PM kickoff",
       "start": "2026-11-22T13:00",
       "end": "2026-11-22T16:30"
     }
   ],
   "briefing": {
-    "issued": "2026-11-17T10:15",
+    "issued": "2026-11-17T19:30",
     "tzabbr": "EST",
-    "headline": "Saturday is dry and sunny. Sunday's game looks mild, near 60°, but bring rain gear. Showers are possible during the game, and rain is more likely Sunday evening and night.",
+    "headline": "Dry and sunny Saturday. Mild Sunday, near 60° for the 1 PM kickoff, with about a 40% chance of showers during the game. Rain is most likely Sunday evening and night.",
     "sections": [
       {
         "title": "Saturday",
-        "text": "**Sunny and dry.** It's cold early: upper 30s to mid 40s at 7 AM, so start with a jacket. By mid-afternoon it's in the low to mid 60s with light winds and lots of sun. The sun sets at 4:41 PM, and it's back into the 50s soon after, then the upper 40s by late evening."
+        "text": "**Sunny and dry.** Low to mid 40s at 7 AM, rising to the low 60s by mid-afternoon with light wind. Sunset is at 4:41 PM; temperatures fall into the 50s soon after and the upper 40s by late evening."
       },
       {
-        "title": "Sunday: game day",
-        "text": "**Cloudy and mild,** near 60° at the 1 PM kickoff with a light breeze. There's about a **40% chance of showers during the game**, more likely in the second half than at kickoff. If the rain comes, it's steadiest Sunday evening and overnight and could be heavy, an inch or more. There's also a real chance the whole day stays dry. No snow or thunder is expected."
+        "title": "Sunday",
+        "text": "**Cloudy and mild,** near 60° from 1 to 4:30 PM with a light breeze. Chance of rain in that window: about 40%. Chance of a soaking (0.25 in or more): about 15%. Rain becomes more likely after 4:30 PM, about a 50% chance Sunday evening and night. Most forecasts total under 0.25 in; the wettest exceed 1 in. No snow or thunder is expected."
       },
       {
         "title": "Monday morning",
-        "text": "Rain ends around daybreak. Then it turns **windy**, with gusts of 25 to 30 mph. Temperatures in the 50s start to fall in the afternoon."
+        "text": "Any rain ends early. Temperatures in the 50s; a few forecasts turn breezy, with gusts near 25 mph by late morning."
       },
       {
         "title": "What to bring",
-        "text": "**Saturday:** a jacket or fleece for the early tailgate, long sleeves for the afternoon, and sunglasses, because the low November sun is bright. **Sunday:** long sleeves, a light jacket, and a **hooded rain jacket or poncho**, since umbrellas don't work in the stands. Wear shoes that can handle puddles. **Monday:** a wind-resistant jacket."
+        "text": "**Saturday:** a jacket or fleece early, long sleeves for the afternoon, and sunglasses for the low sun. **Sunday:** long sleeves, a light jacket and a hooded rain jacket or poncho (many stadiums do not allow umbrellas in the seats), plus water-resistant shoes. **Monday:** a wind-resistant jacket."
       }
     ],
-    "confidence": "**Saturday: high.** **Sunday afternoon and night: low.** It depends on the path of a storm coming up the coast, and that should be clearer by Thursday. I'll update this briefing as it firms up.",
-    "fans": "High pressure near 1028 mb sits over the Mid-Atlantic on Saturday. A weak low forms off the Southeast coast and drifts north Sunday ahead of a Great Lakes cold front. GFS, AIFS and GEM bring its rain shield into Philadelphia Sunday afternoon into early Monday, with 0.6–1.8 in by Monday morning. The ECMWF IFS and ICON keep it offshore and dry. NBM splits the difference at about 0.4 in.\n\nFor the event, the ensembles give a 39–69% chance of 0.1 in or more and a 25–57% chance of 0.5 in or more. GEFS and ENS sit at the low end and AIFS ENS at the high end. The front crosses early Monday, and the wind turns northwest with gusts of 25–30 mph."
+    "confidence": "**Saturday: high.** **Sunday afternoon and night: low.** Rain depends on the track of a low moving up the coast; forecasts should converge by Thursday. Next update: Thursday morning.",
+    "fans": "High pressure covers the Mid-Atlantic on Saturday. A low forms off the Southeast coast and moves north Sunday ahead of a Great Lakes cold front. The latest runs split on its rain shield: GFS brings about 1.8 in to Philadelphia by Monday midday, NBM about 0.4 in, and the ECMWF IFS stays dry.\n\nOver the event, the ensembles give a 51–71% chance of measurable rain and a 35–59% chance of 0.25 in or more. ECMWF ENS is driest and AIFS ENS wettest. For the game window (1–4:30 PM) the three systems give 29%, 35% and 53%."
   }
 }
