@@ -1,24 +1,31 @@
 /* wxmap.pro house style: the tokens. Loaded by every page, including the map.
-   Layout: chart-room calm. A light page with navy ink by default, a deep-ocean
-   dark theme, and colour reserved for the wind scale the forecasts are about.
+   Layout: chart-room calm. A light "survey chart" page (charted-water blue, one
+   buff land band) with navy ink by default, a deep-ocean dark theme, and colour reserved for the wind scale the forecasts are about.
    Token names match globe-kit (--bg, --surface, --text, --text-2, --accent,
    --border) so the map page can take these values without renaming anything.
    Theme: follows the visitor's system; data-theme="light|dark" on <html> wins. */
 
 :root {
   /* colour, light */
-  --bg: #f4f6f8;            /* chart paper, a little blue */
+  /* "survey chart": the water and land tints of a NOAA nautical chart */
+  --bg: #eef4f8;            /* charted water, a faint blue */
   --surface: #ffffff;
-  --surface-2: #e9eef3;
-  --border: #d3dbe4;
-  --border-strong: #aebccb;
-  --text: #0e2236;          /* navy ink */
-  --text-2: #43566b;
-  --text-3: #6b7c8f;
+  --surface-2: #e2ecf3;
+  --border: #c9d8e3;
+  --border-strong: #a3b9ca;
+  --text: #0d2033;          /* navy ink */
+  --text-2: #3f5468;
+  --text-3: #55687c;        /* 4.7:1 on the land band, 5.2:1 on the page */
   --accent: #0a6c96;        /* sounding-line blue */
   --accent-strong: #08577a;
-  --accent-soft: #dcecf4;
+  --accent-soft: #d8eaf4;
   --on-accent: #ffffff;
+  /* the land band: one secondary section per page, never text-heavy cards */
+  --land: #efe7d2;
+  --land-border: #c9b98f;
+  --land-text: #4a4636;     /* 7.7:1 on --land */
+  --swatch-outline: rgba(13, 32, 51, 0.3);  /* legend chips reach 3:1 on white */
+  --hero: #eef4f8;          /* the landing hero sits on the water, not on a card */
   /* the wind scale (kt), same hues in both themes, tuned per theme */
   --calm: #8fb3c9;          /* under 34 kt */
   --gale: #c99a06;          /* 34-47 kt */
@@ -57,6 +64,11 @@
     --accent-strong: #84cbea;
     --accent-soft: #12324a;
     --on-accent: #06121c;
+  --land: #142536;
+  --land-border: #35506b;
+  --land-text: #a7b7c7;
+  --swatch-outline: rgba(228, 236, 243, 0.3);
+  --hero: #0e1b29;
     --calm: #4f7e9c;
     --gale: #e8be3a;
     --storm: #f07a42;
@@ -77,6 +89,11 @@
   --accent-strong: #84cbea;
   --accent-soft: #12324a;
   --on-accent: #06121c;
+  --land: #142536;
+  --land-border: #35506b;
+  --land-text: #a7b7c7;
+  --swatch-outline: rgba(228, 236, 243, 0.3);
+  --hero: #0e1b29;
   --calm: #4f7e9c;
   --gale: #e8be3a;
   --storm: #f07a42;

@@ -1,6 +1,6 @@
 /* Landing page layout. Colours and type come from house.css. */
 
-.hero { background: var(--surface); border-bottom: 1px solid var(--border); }
+.hero { background: var(--hero); border-bottom: 1px solid var(--border); }
 .hero-grid {
   display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
   gap: 48px; align-items: center; padding-block: 64px 72px;
@@ -25,7 +25,9 @@
 .layer-list dd { margin: 0; color: var(--text-2); }
 .layer-list dd.meta { margin-top: auto; padding-top: 6px; font-size: var(--step--1); color: var(--accent); }
 
-.method { background: var(--surface-2); border-block: 1px solid var(--border); }
+.method { background: var(--land); border-block: 1px solid var(--land-border); }
+.method .method-copy p, .method .figures dd { color: var(--land-text); }
+.method .figures > div, .method .figures > div:first-child { border-color: var(--land-border); }
 .method-grid { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 56px; padding-block: 72px; align-items: start; }
 .method-copy { display: flex; flex-direction: column; gap: 14px; max-width: var(--measure); }
 .method-copy p { color: var(--text-2); }

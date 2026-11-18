@@ -17,6 +17,8 @@ map, which is the marine wind forecast with live cyclone phase space on one glob
 ## House style
 
 - Light by default, with a dark theme, both from the same tokens.
+- The light theme is a "survey chart": a faint charted-water blue page (`--bg`) with white cards, and one buff land band (`--land`) for a secondary section per page, taken from NOAA nautical charts.
+- The mark is two offset closed isobars around a blue centre, packed tighter on one side like a deepening low (`assets/favicon.svg`, and inline on each page's brand).
 - IBM Plex Sans Condensed for headings, IBM Plex Sans for text, IBM Plex Mono for numbers and labels.
 - Colour is kept for the wind scale: under 34 kt, gale 34–47, storm 48–63, hurricane force 64+.
   Forecast colours on the map are the same in both themes; only the panels change.

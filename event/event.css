@@ -5,7 +5,7 @@
   --ok: #17885c; --warn: #b07c00; --err: #c0362c;
   --shadow-1: 0 1px 2px rgba(14, 34, 54, .06), 0 4px 16px rgba(14, 34, 54, .06);
   --shadow-2: 0 10px 40px rgba(14, 34, 54, .18);
-  --hero-a: #dcecf4; --hero-b: #f4f6f8;
+  --hero-a: #d8eaf4; --hero-b: #eef4f8;
   --rain: #2f7fd0; --night: rgba(14, 34, 54, .05);
   --wx-sun: #e6a400; --wx-cloud: #c7d2dd; --wx-cloud-dark: #95a6b8; --wx-rain: #2f7fd0; --wx-snow: #6aa7e8; --wx-moon: #8fa3c0;
 }
