@@ -6,10 +6,10 @@ event to its end, on a 0.5 degree box around it:
 
   gfs, ifs, aifs  each deterministic run: sea-level pressure, 6 h precipitation and its type,
                   500 mb height and 1000-500 mb thickness
-  blend           the "most likely" map: a probability-matched mean of the 6 h precipitation over
-                  GFS, ECMWF IFS, AIFS and the GEFS (31), ENS (51) and AIFS ENS (51) members, with
-                  each system weighted equally; the chance of 0.01 in (0.25 mm) or more over those
-                  systems; rain or snow from the members' snow fraction; pressure, height and
+  blend           the blended map: a probability-matched mean of the 6 h precipitation over three
+                  model families weighted equally (NOAA: GFS + GEFS 31; ECMWF: IFS + ENS 51;
+                  ECMWF AI: AIFS + AIFS ENS 51); the chance of 0.01 in (0.25 mm) or more over those
+                  families; rain or snow from the members' snow fraction; pressure, height and
                   thickness as the mean of the three deterministic runs
 
 Only the needed GRIB records are read, by HTTP range, through the shared `nwp` package
@@ -41,7 +41,7 @@ EVENTS = os.path.join(REPO, "event", "events")
 HALF_LAT, HALF_LON, STEP = 13.0, 20.0, 0.5   # box half-size (deg) and output spacing
 WET = 0.25                                   # mm in 6 h: "measurable" (0.01 in)
 MAX_FH = {"gfs": 384, "gefs": 240, "ifs": 360, "aifs": 360, "ens": 360, "aifs-ens": 360}
-NAMES = {"blend": "Most likely", "gfs": "GFS", "ifs": "ECMWF", "aifs": "ECMWF AI"}
+NAMES = {"blend": "Blend", "gfs": "GFS", "ifs": "ECMWF", "aifs": "ECMWF AI"}
 
 GFS_WANT = {"PRMSL:mean sea level": "msl", "HGT:500 mb": "z500", "HGT:1000 mb": "z1000",
             "APCP:surface": "apcp", "CSNOW:surface": "csnow", "CFRZR:surface": "cfrzr", "CICEP:surface": "cicep"}
@@ -205,13 +205,22 @@ def pm_mean(systems):
     return np.where(mean < 0.05, 0.0, pm)
 
 
+FAMILIES = [("gfs", "gefs"), ("ifs", "ens"), ("aifs", "aifs-ens")]
+
+
 def blend_time(dets, ens):
     """dets: {model: fields}; ens: {system: fields with [n,y,x]}. -> blend fields or None."""
+    # One weight per model family (NOAA, ECMWF, ECMWF AI): each deterministic run joins its own
+    # ensemble as one more member, so the three single runs no longer carry half the weight.
     systems, snows = [], []
-    for f in dets.values():
-        systems.append(f["pcp"][None]); snows.append(f["snowfrac"][None])
-    for f in ens.values():
-        systems.append(f["pcp"]); snows.append(f["snowfrac"])
+    for fam_det, fam_ens in FAMILIES:
+        parts = []
+        if fam_det in dets:
+            parts.append((dets[fam_det]["pcp"][None], dets[fam_det]["snowfrac"][None]))
+        if fam_ens in ens:
+            parts.append((ens[fam_ens]["pcp"], ens[fam_ens]["snowfrac"]))
+        if parts:
+            systems.append(np.concatenate([p[0] for p in parts])); snows.append(np.concatenate([p[1] for p in parts]))
     if len(systems) < 2 or not dets:
         return None
     pcp = pm_mean(systems)
