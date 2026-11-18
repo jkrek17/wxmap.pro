@@ -98,8 +98,10 @@ body.sheet-open { overflow: hidden; }
 .glance-stats > div { background: var(--surface); padding: 10px 12px; min-width: 0; }
 .glance-stats dt { font: 500 .6875rem/1.2 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--text-3); }
 .glance-stats dd { margin: 4px 0 0; font-size: 1.125rem; font-weight: 500; }
-.glance-stats dd.sub { margin-top: 2px; font: 400 .8125rem/1.3 var(--sans); color: var(--text-3); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.glance-stats dd.sub { margin-top: 2px; font: 400 .8125rem/1.3 var(--sans); color: var(--text-3); }
 .glance-stats .warn dd:not(.sub) { color: var(--rain); }
+.glance-conf { margin: 12px 0 0; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-size: .875rem; color: var(--text-2); }
+.glance-conf .conf-pill { padding: 5px 9px; font-size: .6875rem; }
 .glance-far { color: var(--text-2); }
 .chips { display: flex; flex-wrap: wrap; gap: 6px; }
 .chip { font: 500 .75rem/1 var(--mono); padding: 6px 10px; border-radius: 999px; background: var(--surface); border: 1px solid var(--border); color: var(--text-2); }

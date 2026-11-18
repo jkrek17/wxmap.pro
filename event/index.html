@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Event Forecast · wxmap.pro</title>
-<meta name="description" content="A weather briefing for your event: every major forecast model and ensemble for the place and hours you care about, sunrise and sunset, the big picture, and what to wear.">
+<meta name="description" content="Event weather forecasts: hour-by-hour conditions, chance of rain, what to wear, sunrise and sunset, blended from the major forecast models and ensembles.">
 <meta name="theme-color" content="#f4f6f8" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#08121d" media="(prefers-color-scheme: dark)">
 <!-- Saved events live in events/<slug>.json; the GFS maps for them in data/<slug>/synoptic.json
@@ -47,7 +47,7 @@
   <section class="planner wrap" id="planner" hidden>
     <div class="planner-hero">
       <p class="eyebrow">Event forecast</p>
-      <h1>Weather for the hours that matter.</h1>
+      <h1>Event weather forecast</h1>
       <p class="lede">Pick a place and a time. Every major model and ensemble, the big picture, sunrise and sunset, and what to wear, in one briefing.</p>
     </div>
     <form class="card planform" id="planform" autocomplete="off">
@@ -58,7 +58,7 @@
           <ul id="placelist" class="suggest" role="listbox" hidden></ul>
         </div>
       </label>
-      <label class="field"><span>Event name <em>(optional)</em></span><input id="ename" type="text" placeholder="Our wedding"></label>
+      <label class="field"><span>Event name <em>(optional)</em></span><input id="ename" type="text" placeholder="e.g. Outdoor ceremony"></label>
       <div class="row2">
         <label class="field"><span>Starts</span><input id="estart" type="datetime-local" required></label>
         <label class="field"><span>Ends</span><input id="eend" type="datetime-local" required></label>
@@ -70,7 +70,7 @@
         <label><input type="radio" name="kind" value="wedding"><span>Wedding</span></label>
         <label><input type="radio" name="kind" value="travel"><span>Travel</span></label>
       </fieldset>
-      <button class="btn btn-primary btn-wide" type="submit">Build the briefing</button>
+      <button class="btn btn-primary btn-wide" type="submit">Get forecast</button>
       <p class="hint" id="planhint">Up to 16 days ahead uses the models; further out shows what is typical for the date.</p>
     </form>
     <div class="saved" id="saved" hidden>
@@ -107,13 +107,13 @@
         <a href="#s-wear">What to wear</a>
         <a href="#s-sun">Sunrise &amp; sunset</a>
         <a href="#s-typical">Typical</a>
-        <a href="#s-details">For weather fans</a>
+        <a href="#s-details">Details</a>
       </div>
     </nav>
 
     <div class="wrap sections">
       <section id="s-brief" class="card brief" hidden>
-        <div class="card-head"><h2>The forecast</h2><span class="meta" id="b-issued"></span></div>
+        <div class="card-head"><h2>Summary</h2><span class="meta" id="b-issued"></span></div>
         <div id="b-body" class="prose"></div>
       </section>
 
@@ -164,7 +164,7 @@
       </section>
 
       <details class="card nerd" id="s-details">
-        <summary><span><h2>For weather fans</h2><span class="meta">Every model side by side and the ensembles</span></span><svg class="chev" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 8l5 5 5-5"/></svg></summary>
+        <summary><span><h2>Forecast details</h2><span class="meta">Each model side by side, and the ensembles</span></span><svg class="chev" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 8l5 5 5-5"/></svg></summary>
         <div class="nerd-body">
         <div id="s-models" class="sub">
           <div class="card-head"><h2>Model by model</h2><span class="meta" id="m-meta"></span></div>
