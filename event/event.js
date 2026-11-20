@@ -526,7 +526,7 @@
     $('#glance').innerHTML =
       '<div class="glance-main">' +
         '<div class="glance-icon">' + WxIcons.icon(code, night) + '</div>' +
-        '<div><p class="eyebrow">' + (key ? esc(key.label) : 'During the event') + '</p>' +
+        '<div><p class="eyebrow">' + (key ? esc(key.label) + ' · ' + hourSpan(key.start, key.end) : 'During the event') + '</p>' +
         '<p class="big num">' + r0(lo) + (Math.round(hi) !== Math.round(lo) ? '–' + r0(hi) : '') + '°</p>' +
         '<p class="cond">' + (words || WxIcons.words(code, night)) + ' · feels ' + r0(w.fLo) + (Math.round(w.fHi) !== Math.round(w.fLo) ? '–' + r0(w.fHi) : '') + '°</p></div>' +
       '</div>' +
@@ -546,7 +546,7 @@
       var head = p.day !== prevDay ? '<span class="pday">' + fmt(p.day + 'T12:00', { weekday: 'short' }) + '</span>' : '';
       prevDay = p.day;
       var aria = fmt(p.day + 'T12:00', { weekday: 'long' }) + ' ' + p.label.toLowerCase() + ': ' + WxIcons.words(p.code, p.night) + ', ' + (p.night ? 'low ' + r0(p.lo) + '°, high ' + r0(p.hi) : 'high ' + r0(p.hi) + '°, low ' + r0(p.lo)) + '°, ' + Math.round(p.pop * 100) + '% chance of rain, wind ' + compass(p.dir) + ' ' + r0(p.wind) + ' mph' + (p.gust >= p.wind + 8 ? ', gusts ' + r0(p.gust) : '') + '. Open hourly details.';
-      return '<button type="button" class="part' + (p.highlight ? ' hl' : '') + (p.night ? ' night' : '') + '" data-k="' + k + '" aria-label="' + esc(aria) + '">' + head +
+      return '<button type="button" class="part' + (p.highlight ? ' hl' : '') + (p.night ? ' night' : '') + '" data-k="' + k + '"' + (p.highlight ? ' data-hl="' + esc(ev.highlight[0].label) + '"' : '') + ' aria-label="' + esc(aria) + '">' + head +
         '<span class="plabel">' + p.label + '</span>' + WxIcons.icon(p.code, p.night) +
         '<span class="ptemp num">' + r0(p.night ? p.lo : p.hi) + '°<small>' + r0(p.night ? p.hi : p.lo) + '°</small></span>' +
         '<span class="ppop num' + (p.pop >= 0.5 ? ' wet' : '') + '"><svg viewBox="0 0 10 12"><path d="M5 0C5 0 0 6 0 8a5 5 0 0 0 10 0C10 6 5 0 5 0z"/></svg>' + Math.round(p.pop * 100) + '%</span>' +
@@ -662,7 +662,7 @@
 
   function chart(sel, ev, hs, series, o) {
     var fig = $(sel), box = fig.querySelector('.plot');
-    var W = box.clientWidth || 600, Hh = W < 560 ? 170 : 200, m = { l: 34, r: o.r ? 34 : 10, t: 10, b: 24 };
+    var hlw = (ev.highlight || []).length, W = box.clientWidth || 600, Hh = (W < 560 ? 170 : 200) + (hlw ? 14 : 0), m = { l: 34, r: o.r ? 34 : 10, t: hlw ? 24 : 10, b: 24 };
     var n = hs.length, iw = W - m.l - m.r, ih = Hh - m.t - m.b;
     var x = function (i) { return m.l + (n > 1 ? i * iw / (n - 1) : 0); };
     var vals = [];
@@ -674,7 +674,7 @@
     var rmax = 0; series.forEach(function (s) { if (s.axis === 'r') s.v.forEach(function (v) { rmax = Math.max(rmax, v || 0); }); });
     if (o.r) rmax = Math.max(o.r.min, Math.ceil(rmax * 4) / 4);
     var yr = function (v) { return m.t + ih - v / rmax * ih; };
-    var g = '';
+    var g = '', hlEdges = '';
     // night and highlight shading
     hs.forEach(function (h, i) {
       var x0 = x(Math.max(0, i - 0.5)), x1 = x(Math.min(n - 1, i + 0.5));
@@ -684,7 +684,12 @@
     (ev.highlight || []).forEach(function (k) {
       var a = hs.findIndex(function (h) { return h.s >= k.start; }), b = hs.findIndex(function (h) { return h.s >= k.end; });
       if (a < 0) return; if (b < 0) b = n - 1;
-      g += '<rect class="hlband" x="' + x(a) + '" y="' + m.t + '" width="' + (x(b) - x(a)) + '" height="' + ih + '"/><text class="hltext" x="' + (x(a) + 4) + '" y="' + (m.t + 11) + '">' + esc(k.label) + '</text>';
+      // the key window: a shaded span with solid edges, labelled above the plot with its times
+      var txt = /\d\s*[–-]\s*\d/.test(k.label) ? k.label : k.label + ' · ' + hourSpan(k.start, k.end);
+      var tw = txt.length * 6.2 + 12, cx = Math.max(m.l + tw / 2, Math.min(W - m.r - tw / 2, (x(a) + x(b)) / 2));
+      g += '<rect class="hlband" x="' + x(a) + '" y="' + m.t + '" width="' + Math.max(2, x(b) - x(a)) + '" height="' + ih + '"/>';
+      hlEdges += '<line class="hledge" x1="' + x(a) + '" x2="' + x(a) + '" y1="' + (m.t - 4) + '" y2="' + (m.t + ih) + '"/><line class="hledge" x1="' + x(b) + '" x2="' + x(b) + '" y1="' + (m.t - 4) + '" y2="' + (m.t + ih) + '"/>' +
+        '<rect class="hlpill" x="' + (cx - tw / 2) + '" y="2" width="' + tw + '" height="16" rx="8"/><text class="hltext" x="' + cx + '" y="13.5" text-anchor="middle">' + esc(txt) + '</text>';
     });
     // grid
     var step = niceStep(hi - lo, ih < 150 ? 4 : 5);
@@ -710,6 +715,7 @@
         g += '<path d="' + d + '" fill="none" stroke="' + s.col + '" stroke-width="' + s.w + '"' + (s.dash ? ' stroke-dasharray="' + s.dash + '"' : '') + (s.op ? ' opacity="' + s.op + '"' : '') + ' stroke-linejoin="round" stroke-linecap="round"/>';
       }
     });
+    g += hlEdges;
     g += '<line class="xhair" id="' + sel.slice(1) + '-x" x1="0" x2="0" y1="' + m.t + '" y2="' + (m.t + ih) + '" visibility="hidden"/>';
     var main = series.filter(function (x) { return x.type !== 'band' && x.v; })[series.filter(function (x) { return x.type !== 'band' && x.v; }).length - 1];
     var mv = main ? main.v.filter(function (v) { return v != null && isFinite(v); }) : [];
