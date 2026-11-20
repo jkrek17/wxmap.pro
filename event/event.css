@@ -137,7 +137,7 @@ body.sheet-open { overflow: hidden; }
 .part:hover { border-color: var(--border-strong); }
 .part.night { background: var(--surface-2); }
 .part.hl { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
-.part.hl::after { content: "Key time"; position: absolute; bottom: -1px; left: 50%; transform: translate(-50%, 50%); font: 600 .625rem/1 var(--mono); text-transform: uppercase; letter-spacing: .06em; background: var(--accent); color: var(--on-accent); padding: 3px 6px; border-radius: 999px; }
+.part.hl::after { content: attr(data-hl); position: absolute; bottom: -1px; left: 50%; transform: translate(-50%, 50%); font: 600 .625rem/1 var(--mono); text-transform: uppercase; letter-spacing: .06em; background: var(--accent); color: var(--on-accent); padding: 3px 6px; border-radius: 999px; }
 .pday { position: absolute; top: 7px; left: 9px; font: 600 .6875rem/1 var(--mono); text-transform: uppercase; letter-spacing: .06em; color: var(--accent); }
 .plabel { font-size: .75rem; color: var(--text-3); }
 .part .wx { width: 40px; height: 40px; }
@@ -178,8 +178,10 @@ body.sheet-open { overflow: hidden; }
 .plot .ax { fill: var(--text-3); font: 400 10.5px var(--mono); }
 .plot .night { fill: var(--night); }
 .plot .outside { fill: var(--bg); opacity: .6; }
-.plot .hlband { fill: color-mix(in srgb, var(--accent) 10%, transparent); stroke: color-mix(in srgb, var(--accent) 45%, transparent); stroke-dasharray: 3 3; }
-.plot .hltext { fill: var(--accent); font: 600 10px var(--mono); text-transform: uppercase; }
+.plot .hlband { fill: color-mix(in srgb, var(--accent) 22%, transparent); }
+.plot .hledge { stroke: var(--accent); stroke-width: 1.5; }
+.plot .hlpill { fill: var(--accent); }
+.plot .hltext { fill: var(--surface); font: 600 10px var(--mono); text-transform: uppercase; letter-spacing: .02em; }
 .plot .band { fill: color-mix(in srgb, var(--accent) 16%, transparent); }
 .plot .bar { fill: color-mix(in srgb, var(--rain) 40%, transparent); }
 .plot .bar.hi { fill: color-mix(in srgb, var(--rain) 75%, transparent); }
